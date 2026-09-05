@@ -1,0 +1,141 @@
+# Large-Scale Image to Text OCR Pipeline 🚀
+
+Hệ thống OCR hiệu năng cao (High-throughput Batch OCR Pipeline) được thiết kế đặc biệt để chuyển đổi **hàng chục nghìn đến hàng triệu file ảnh sách sang văn bản (`.txt` và `JSONL`)**, hỗ trợ đa tiến trình, tự động bù xoay ảnh nghiêng, chia tách sách 2 trang, và tích hợp đa dạng động cơ từ **Gemini Vision AI (chính xác 100%)** tới **VietOCR / RapidOCR (Offline)**.
+
+---
+
+## 🌟 Động Cơ OCR & Độ Chính Xác
+
+Hệ thống hỗ trợ 4 động cơ linh hoạt tùy theo nhu cầu:
+
+1. **`gemini` (Khuyên dùng - Độ chính xác 100%)**:
+   - Tận dụng sức mạnh của mô hình đa phương thức **Google Gemini Vision** (`gemini-2.5-flash` / `gemini-2.0-flash`).
+   - Hiểu sâu ngữ cảnh tiếng Việt: bảo toàn 100% dấu câu, thanh điệu tiếng Việt, danh xưng, tổ chức, tên đất tên người.
+   - Tự động phân tách rõ ràng cấu trúc **Trang Trái** và **Trang Phải** khi chụp mở sách đôi.
+   - Tốc độ cực nhanh qua API, có cơ chế tự động thử lại (retry) khi gặp giới hạn tốc độ mạng (Rate Limit 429).
+2. **`vietocr` (Offline Chuyên Tiếng Việt)**:
+   - Sử dụng Transformer VGG chuyên biệt cho nhận diện chữ viết tiếng Việt có dấu.
+   - Hoạt động hoàn toàn Offline, không cần kết nối mạng hay API key.
+3. **`rapidocr` (Offline Siêu Tốc qua ONNX Runtime)**:
+   - Tối ưu tốc độ xử lý hàng trăm nghìn trang trên CPU/GPU thông qua ONNX Runtime.
+4. **`easyocr` (Offline qua PyTorch)**:
+   - Động cơ mã nguồn mở hỗ trợ đa ngôn ngữ.
+
+---
+
+## 🛠️ Cài Đặt
+
+1. Cài đặt các gói phụ thuộc cần thiết:
+```bash
+pip install -r requirements.txt
+```
+
+2. *(Khuyên dùng)* Cấu hình Google Gemini API Key để đạt độ chính xác cao nhất:
+   - Lấy API Key miễn phí tại: [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - Mở file `.env` ở thư mục gốc và dán key vào:
+     ```env
+     GEMINI_API_KEY=AIzaSy...
+     ```
+   - Hoặc điền trực tiếp vào `configs/config.yaml` tại mục `ocr.gemini.api_key`.
+
+---
+
+## 📖 Hướng Dẫn Sử Dụng Nhanh
+
+### 1. Thử nghiệm trên 1 ảnh bất kỳ
+Kiểm tra ngay chất lượng đọc văn bản trên một bức ảnh cụ thể:
+```bash
+# Thử nghiệm với engine Gemini Vision (chính xác nhất):
+python main.py test-image "data/input/đất yên mỹ- hưng yên/20260814_172125.jpg" --engine gemini
+
+# Hoặc thử nghiệm với RapidOCR:
+python main.py test-image "data/input/đất yên mỹ- hưng yên/20260814_172125.jpg" --engine rapidocr
+```
+
+### 2. Chuẩn bị ảnh đầu vào theo từng Cuốn Sách
+Tạo mỗi cuốn sách thành một thư mục con bên trong `data/input/`:
+```text
+data/input/
+├── Cuon_Sach_01/
+│   ├── trang_001.jpg
+│   ├── trang_002.jpg
+│   └── ...
+```
+
+### 3. Xem danh sách sách & tiến độ
+```bash
+python main.py books
+```
+
+### 4. Chạy chuyển đổi OCR hàng loạt
+- **Chạy toàn bộ các sách trong hàng đợi:**
+  ```bash
+  python main.py run
+  ```
+- **Chạy riêng 1 cuốn sách cụ thể:**
+  ```bash
+  python main.py run --book "đất yên mỹ- hưng yên"
+  ```
+- Tùy chọn số lượng worker song song hoặc giới hạn số ảnh:
+  ```bash
+  python main.py run --workers 4 --limit 100
+  ```
+
+### 5. Ghép các trang thành 1 file text hoàn chỉnh của cuốn sách
+Sau khi OCR xong, bạn có thể gộp tất cả các trang `.txt` lẻ của cuốn sách lại theo đúng thứ tự:
+```bash
+python main.py merge-book "đất yên mỹ- hưng yên"
+# Kết quả sẽ được lưu tại: data/output/đất yên mỹ- hưng yên.txt
+```
+
+### 6. Xem thống kê tiến độ
+```bash
+python main.py status
+```
+
+### 7. Tiếp tục tiến trình khi bị gián đoạn
+```bash
+python main.py resume
+```
+
+### 8. Thử lại các trang bị lỗi (nếu có)
+```bash
+python main.py retry-failed
+```
+
+---
+
+## ⚙️ Tùy Chỉnh Cấu Hình (`configs/config.yaml`)
+
+```yaml
+system:
+  num_workers: 4              # Số tiến trình / luồng chạy song song
+  batch_size: 20              # Kích thước chunk gửi tới worker
+  max_tasks_per_child: 500    # Tự động refresh worker để giải phóng RAM
+
+paths:
+  input_dir: "data/input"
+  output_dir: "data/output"
+  db_path: "data/tracker.db"
+
+ocr:
+  engine: "gemini"            # "gemini" (chính xác 100%), "vietocr", "rapidocr", "easyocr"
+  gemini:
+    api_key: ""               # Để trống nếu dùng .env hoặc biến môi trường GEMINI_API_KEY
+    model_name: "gemini-2.5-flash"
+    temperature: 0.0
+    max_retries: 3
+  use_angle_cls: true
+  min_score_thresh: 0.3
+
+preprocessing:
+  enable: true
+  max_dimension: 2560         # Đảm bảo độ sắc nét cho chữ in nhỏ và dấu thanh
+  auto_orient: true           # Tự động phát hiện và xoay ảnh chụp nghiêng 90/270 độ
+  auto_contrast: false
+  split_double_pages: false   # True nếu muốn tách ảnh sách 2 trang thành 2 lượt đọc
+
+output:
+  format: "both"              # 'txt' (1-1), 'jsonl' (gộp), hoặc 'both' (cả hai)
+  mirror_folder_structure: true
+```
