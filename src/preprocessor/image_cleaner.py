@@ -10,7 +10,7 @@ class ImageCleaner:
         self,
         max_dimension: int = 2560,
         auto_contrast: bool = False,
-        auto_orient: bool = True,
+        auto_orient: bool = False,
         split_double_pages: bool = False,
         detector: Optional[Any] = None
     ):
@@ -20,75 +20,11 @@ class ImageCleaner:
         self.split_double_pages = split_double_pages
         self._detector = detector
 
-    def _get_detector(self):
-        if self._detector is None:
-            from rapidocr_onnxruntime import RapidOCR
-            self._detector = RapidOCR(use_angle_cls=True)
-        return self._detector
-
     def _orient_image(self, img_bgr: np.ndarray) -> Tuple[np.ndarray, bool]:
-        """
-        Detect if text lines in image are oriented vertically (taken sideways at 90/270 degrees).
-        Rotates image so text lines are horizontal for optimal OCR detection.
-        """
-        try:
-            h, w = img_bgr.shape[:2]
-            scale = 960 / max(h, w)
-            small = cv2.resize(img_bgr, (int(w * scale), int(h * scale)))
+        """EXIF orientation is already handled in load_and_preprocess."""
+        return img_bgr, False
 
-            detector = self._get_detector()
-            boxes, _ = detector(small)
-            if not boxes:
-                return img_bgr, False
 
-            horiz_count = 0
-            vert_count = 0
-            for box, text, score in boxes:
-                xs = [pt[0] for pt in box]
-                ys = [pt[1] for pt in box]
-                bw = max(xs) - min(xs)
-                bh = max(ys) - min(ys)
-                if bw > bh * 1.5:
-                    horiz_count += 1
-                elif bh > bw * 1.5:
-                    vert_count += 1
-
-            # If text lines are predominantly vertical, the image was captured sideways
-            if vert_count > horiz_count and vert_count >= 3:
-                # Test 90 CW vs 90 CCW
-                img_90 = cv2.rotate(img_bgr, cv2.ROTATE_90_CLOCKWISE)
-                small_90 = cv2.resize(img_90, (int(h * scale), int(w * scale)))
-                b90, _ = detector(small_90)
-
-                img_270 = cv2.rotate(img_bgr, cv2.ROTATE_90_COUNTERCLOCKWISE)
-                small_270 = cv2.resize(img_270, (int(h * scale), int(w * scale)))
-                b270, _ = detector(small_270)
-
-                # Count valid horizontal lines detected in each orientation
-                def count_valid_horiz(b_list):
-                    if not b_list:
-                        return 0, 0.0
-                    cnt = 0
-                    total_score = 0.0
-                    for box, text, score in b_list:
-                        xs = [pt[0] for pt in box]
-                        ys = [pt[1] for pt in box]
-                        if (max(xs) - min(xs)) > (max(ys) - min(ys)) * 1.2:
-                            cnt += 1
-                            total_score += score
-                    return cnt, total_score
-
-                cnt_90, score_90 = count_valid_horiz(b90)
-                cnt_270, score_270 = count_valid_horiz(b270)
-
-                if cnt_90 > cnt_270 or (cnt_90 == cnt_270 and score_90 >= score_270):
-                    return img_90, True
-                else:
-                    return img_270, True
-
-            return img_bgr, False
-        except Exception:
-            return img_bgr, False
 
     def split_pages(self, img_bgr: np.ndarray, overlap_ratio: float = 0.03) -> List[np.ndarray]:
         """

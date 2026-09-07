@@ -17,54 +17,20 @@ def _get_engine_and_cleaner(config_dict: Dict[str, Any]):
 
                 pre_cfg = config_dict.get("preprocessing", {})
                 ocr_cfg = config_dict.get("ocr", {})
-                engine_name = ocr_cfg.get("engine", "gemini").lower()
-
-                if engine_name == "gemini":
-                    from src.engines.gemini_engine import GeminiVisionEngine
-                    gemini_cfg = ocr_cfg.get("gemini", {})
-                    _local.engine = GeminiVisionEngine(
-                        api_key=gemini_cfg.get("api_key") or None,
-                        model_name=gemini_cfg.get("model_name", "gemini-2.5-flash"),
-                        temperature=gemini_cfg.get("temperature", 0.0),
-                        max_retries=gemini_cfg.get("max_retries", 3),
-                    )
-                    detector = None
-
-                elif engine_name == "vietocr":
-                    from src.engines.vietocr_engine import VietOCREngine
-                    _local.engine = VietOCREngine(
-                        model_config=ocr_cfg.get("vietocr_model", "vgg_transformer"),
-                        device=ocr_cfg.get("vietocr_device", "cpu"),
-                        min_score_thresh=ocr_cfg.get("min_score_thresh", 0.3),
-                    )
-                    detector = _local.engine.detector
-
-                elif engine_name == "easyocr":
-                    from src.engines.easyocr_engine import EasyOCREngine
-                    _local.engine = EasyOCREngine(
-                        languages=ocr_cfg.get("languages", ["vi", "en"]),
-                        gpu=ocr_cfg.get("gpu", False),
-                        min_score_thresh=ocr_cfg.get("min_score_thresh", 0.3),
-                        rec_batch_size=ocr_cfg.get("rec_batch_size", 8),
-                        beam_width=ocr_cfg.get("beam_width", 3),
-                    )
-                    detector = None
-
-                else:  # rapidocr
-                    from src.engines.rapidocr_engine import RapidOCREngine
-                    _local.engine = RapidOCREngine(
-                        use_angle_cls=ocr_cfg.get("use_angle_cls", True),
-                        det_limit_side_len=ocr_cfg.get("det_limit_side_len", 960),
-                        min_score_thresh=ocr_cfg.get("min_score_thresh", 0.3),
-                    )
-                    detector = _local.engine.ocr
+                from src.engines.gemini_engine import GeminiVisionEngine
+                gemini_cfg = ocr_cfg.get("gemini", {})
+                _local.engine = GeminiVisionEngine(
+                    api_key=gemini_cfg.get("api_key") or None,
+                    model_name=gemini_cfg.get("model_name", "gemini-2.5-flash"),
+                    temperature=gemini_cfg.get("temperature", 0.0),
+                    max_retries=gemini_cfg.get("max_retries", 3),
+                )
 
                 _local.cleaner = ImageCleaner(
                     max_dimension=pre_cfg.get("max_dimension", 2560),
                     auto_contrast=pre_cfg.get("auto_contrast", False),
-                    auto_orient=pre_cfg.get("auto_orient", True),
-                    split_double_pages=pre_cfg.get("split_double_pages", False),
-                    detector=detector
+                    auto_orient=pre_cfg.get("auto_orient", False),
+                    split_double_pages=pre_cfg.get("split_double_pages", False)
                 )
 
                 _local.initialized = True

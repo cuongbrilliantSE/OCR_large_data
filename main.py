@@ -300,22 +300,19 @@ def export_failed(
 @app.command()
 def test_image(
     image_path: str = typer.Argument(..., help="Đường dẫn tới file ảnh cần kiểm tra"),
-    engine: Optional[str] = typer.Option(None, "--engine", "-e", help="Chỉ định engine (gemini, vietocr, rapidocr, easyocr)"),
     config: str = typer.Option("configs/config.yaml", "--config", "-c", help="Đường dẫn file cấu hình YAML")
 ):
     """
     Chạy thử nghiệm OCR trên một bức ảnh cụ thể và in trực tiếp nội dung trích xuất ra màn hình.
     """
     cfg = _load_app_config(config)
-    if engine:
-        cfg.ocr.engine = engine
 
     img_p = Path(image_path)
     if not img_p.exists():
         console.print(f"[bold red]Lỗi: Không tìm thấy file ảnh tại {image_path}[/bold red]")
         return
 
-    console.print(f"[bold cyan]Đang xử lý thử nghiệm ảnh:[/bold cyan] {img_p.name} bằng engine [yellow]{cfg.ocr.engine}[/yellow]...")
+    console.print(f"[bold cyan]Đang xử lý thử nghiệm ảnh:[/bold cyan] {img_p.name} bằng [yellow]Gemini Vision AI[/yellow]...")
 
     cfg_dict = cfg.model_dump()
     from src.pipeline.worker import _get_engine_and_cleaner
@@ -337,6 +334,21 @@ def test_image(
         console.print("\n[bold green]=== KẾT QUẢ TRÍCH XUẤT VĂN BẢN ===[/bold green]")
         console.print(res["full_text"])
         console.print(f"\n[dim]Thời gian xử lý: {res['elapse_ms']} ms | Độ tin cậy: {res['avg_confidence']}[/dim]")
+
+
+@app.command()
+def web(
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Địa chỉ host chạy server"),
+    port: int = typer.Option(8000, "--port", "-p", help="Cổng mạng (port)"),
+    reload: bool = typer.Option(False, "--reload", "-r", help="Tự động reload khi có thay đổi code")
+):
+    """
+    Khởi chạy giao diện Web Studio cho phép kéo thả file nén RAR/ZIP và xem tiến độ OCR trực quan.
+    """
+    import uvicorn
+    console.print(f"\n[bold green]🚀 Đang khởi động Book OCR Studio Web Interface...[/bold green]")
+    console.print(f"👉 Truy cập giao diện tại: [bold cyan]http://localhost:{port}[/bold cyan] hoặc [bold cyan]http://127.0.0.1:{port}[/bold cyan]\n")
+    uvicorn.run("src.web.app:app", host=host, port=port, reload=reload)
 
 
 if __name__ == "__main__":

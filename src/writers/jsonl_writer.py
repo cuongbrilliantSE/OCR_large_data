@@ -8,7 +8,12 @@ class JsonlWriter(BaseWriter):
     def __init__(self, output_file: str | Path):
         self.output_file = Path(output_file)
         self.output_file.parent.mkdir(parents=True, exist_ok=True)
-        self._file_handle = open(self.output_file, "a", encoding="utf-8")
+        self._file_handle = None
+
+    def _get_handle(self):
+        if self._file_handle is None or self._file_handle.closed:
+            self._file_handle = open(self.output_file, "a", encoding="utf-8")
+        return self._file_handle
 
     def write(self, rel_file_path: str, ocr_result: Dict[str, Any]) -> None:
         confidence = ocr_result.get("confidence") or ocr_result.get("avg_confidence", 0.0)
@@ -20,9 +25,12 @@ class JsonlWriter(BaseWriter):
             "lines": ocr_result.get("lines", []),
             "processing_time_ms": round(float(time_ms), 2)
         }
-        self._file_handle.write(json.dumps(record, ensure_ascii=False) + "\n")
-        self._file_handle.flush()
+        handle = self._get_handle()
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        handle.flush()
 
     def close(self) -> None:
         if self._file_handle and not self._file_handle.closed:
             self._file_handle.close()
+            self._file_handle = None
+

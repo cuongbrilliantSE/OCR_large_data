@@ -1,5 +1,5 @@
 system:
-  num_workers: 4              # Số luồng xử lý song song (Gemini API là I/O bound nên có thể để 4 - 8)
+  num_workers: 2              # Số luồng xử lý song song (2 luồng ổn định với giới hạn RPM của Gemini API)
   batch_size: 20              # Batch size gửi cho dispatcher
   max_tasks_per_child: 500    # Khởi động lại worker sau mỗi 500 ảnh để giải phóng RAM
 
@@ -10,27 +10,12 @@ paths:
   log_dir: "logs"
 
 ocr:
-  # Lựa chọn engine:
-  # 1. "gemini"  : KHUYÊN DÙNG - Độ chính xác 100% tiếng Việt, đọc hiểu ngữ cảnh, ngắt đoạn, dấu câu, tên riêng chuẩn xác
-  # 2. "vietocr" : Chạy OFFLINE không cần mạng/API key - Model Transformer chuyên biệt tiếng Việt
-  # 3. "rapidocr": Chạy OFFLINE siêu nhanh qua ONNX
-  # 4. "easyocr" : Chạy OFFLINE với PyTorch
-  engine: "gemini"
-
-  # Cấu hình Gemini Vision AI
+  engine: "gemini"            # Tận dụng Gemini Vision AI: Độ chính xác 100% tiếng Việt
   gemini:
-    api_key: ""               # Để trống nếu đã cấu hình trong file .env hoặc biến môi trường GEMINI_API_KEY
-    model_name: "gemini-2.5-flash" # gemini-2.5-flash hoặc gemini-2.0-flash (nhanh, chính xác nhất)
+    api_key: ""               # Để trống nếu cấu hình trong file .env hoặc biến môi trường GEMINI_API_KEY
+    model_name: "gemini-3.5-flash-lite" # gemini-3.5-flash-lite
     temperature: 0.0
-    max_retries: 3
-
-  # Cấu hình VietOCR (khi dùng engine: vietocr)
-  vietocr_model: "vgg_transformer"
-  vietocr_device: "cpu"       # "cpu" hoặc "cuda:0" nếu có GPU
-
-  # Cấu hình RapidOCR / EasyOCR
-  use_angle_cls: true
-  min_score_thresh: 0.3
+    max_retries: 8
 
 preprocessing:
   enable: true

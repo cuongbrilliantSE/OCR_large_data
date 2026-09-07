@@ -1,5 +1,6 @@
 import os
 import io
+import re
 import time
 import cv2
 import numpy as np
@@ -37,9 +38,9 @@ class GeminiVisionEngine(BaseOCREngine):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model_name: str = "gemini-2.5-flash",
+        model_name: str = "gemini-3.5-flash-lite",
         temperature: float = 0.0,
-        max_retries: int = 3,
+        max_retries: int = 8,
         **kwargs
     ):
         self.api_key = (
@@ -47,7 +48,15 @@ class GeminiVisionEngine(BaseOCREngine):
             or os.getenv("GEMINI_API_KEY")
             or os.getenv("GOOGLE_API_KEY")
         )
-        self.model_name = model_name
+        self.model_pool = list(dict.fromkeys([
+            model_name,
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3-flash-preview",
+            "gemini-flash-latest"
+        ]))
+        self.current_model_idx = 0
+        self.model_name = self.model_pool[0]
         self.temperature = temperature
         self.max_retries = max_retries
 
@@ -95,18 +104,44 @@ class GeminiVisionEngine(BaseOCREngine):
             except Exception as e:
                 err_str = str(e)
                 last_err = e
-                # Exponential backoff on rate limits
+                # Exponential backoff on rate limits (429) & Quota
                 if "429" in err_str or "ResourceExhausted" in err_str or "quota" in err_str.lower():
-                    sleep_time = (2 ** attempt) * 2 + 1
-                    time.sleep(sleep_time)
-                else:
-                    # Model fallback check
-                    if "404" in err_str or "not found" in err_str.lower():
-                        if self.model_name != "gemini-1.5-flash":
-                            self.model_name = "gemini-1.5-flash"
-                            self._init_client()
+                    # Check if daily quota hit, automatically switch to next model in pool
+                    if "perday" in err_str.lower() or "limit: 20" in err_str or "quotaid" in err_str.lower():
+                        if self.current_model_idx + 1 < len(self.model_pool):
+                            self.current_model_idx += 1
+                            self.model_name = self.model_pool[self.current_model_idx]
+                            print(f"\n[Gemini API] Quota đầy, tự động chuyển sang model: {self.model_name}")
+                            time.sleep(1)
                             continue
-                    time.sleep(1)
+
+                    match = re.search(r"retry in ([0-9.]+)s", err_str, re.IGNORECASE)
+                    if not match:
+                        match = re.search(r"retryDelay['\":\s]+([0-9.]+)s", err_str)
+                    
+                    if match:
+                        sleep_time = float(match.group(1)) + 3.0
+                    else:
+                        sleep_time = max(20.0, (2 ** attempt) * 5.0)
+                    time.sleep(sleep_time)
+                elif "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str.lower():
+                    if self.current_model_idx + 1 < len(self.model_pool):
+                        self.current_model_idx += 1
+                        self.model_name = self.model_pool[self.current_model_idx]
+                        print(f"\n[Gemini API] Model bận/quá tải, chuyển sang: {self.model_name}")
+                        time.sleep(1)
+                        continue
+                    time.sleep(10.0 + attempt * 5.0)
+                else:
+                    # 404 or other error - switch to next model
+                    if "404" in err_str or "not found" in err_str.lower():
+                        if self.current_model_idx + 1 < len(self.model_pool):
+                            self.current_model_idx += 1
+                            self.model_name = self.model_pool[self.current_model_idx]
+                            print(f"\n[Gemini API] Model không hỗ trợ, chuyển sang: {self.model_name}")
+                            time.sleep(1)
+                            continue
+                    time.sleep(2)
 
         raise RuntimeError(f"Lỗi gọi Gemini Vision API sau {self.max_retries} lần thử: {last_err}")
 

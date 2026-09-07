@@ -1,25 +1,14 @@
 # Large-Scale Image to Text OCR Pipeline 🚀
 
-Hệ thống OCR hiệu năng cao (High-throughput Batch OCR Pipeline) được thiết kế đặc biệt để chuyển đổi **hàng chục nghìn đến hàng triệu file ảnh sách sang văn bản (`.txt` và `JSONL`)**, hỗ trợ đa tiến trình, tự động bù xoay ảnh nghiêng, chia tách sách 2 trang, và tích hợp đa dạng động cơ từ **Gemini Vision AI (chính xác 100%)** tới **VietOCR / RapidOCR (Offline)**.
+Hệ thống OCR hiệu năng cao (High-throughput Batch OCR Pipeline) được thiết kế chuyên biệt để chuyển đổi **hàng chục nghìn đến hàng triệu file ảnh sách sang văn bản (`.txt` và `JSONL`)**, hỗ trợ đa tiến trình, tối ưu hóa ảnh đầu vào và tận dụng sức mạnh vượt trội của **Google Gemini Vision AI (chính xác 100% tiếng Việt có dấu)**.
 
 ---
 
-## 🌟 Động Cơ OCR & Độ Chính Xác
+## 🌟 Động Cơ OCR: Google Gemini Vision AI
 
-Hệ thống hỗ trợ 4 động cơ linh hoạt tùy theo nhu cầu:
-
-1. **`gemini` (Khuyên dùng - Độ chính xác 100%)**:
-   - Tận dụng sức mạnh của mô hình đa phương thức **Google Gemini Vision** (`gemini-2.5-flash` / `gemini-2.0-flash`).
-   - Hiểu sâu ngữ cảnh tiếng Việt: bảo toàn 100% dấu câu, thanh điệu tiếng Việt, danh xưng, tổ chức, tên đất tên người.
-   - Tự động phân tách rõ ràng cấu trúc **Trang Trái** và **Trang Phải** khi chụp mở sách đôi.
-   - Tốc độ cực nhanh qua API, có cơ chế tự động thử lại (retry) khi gặp giới hạn tốc độ mạng (Rate Limit 429).
-2. **`vietocr` (Offline Chuyên Tiếng Việt)**:
-   - Sử dụng Transformer VGG chuyên biệt cho nhận diện chữ viết tiếng Việt có dấu.
-   - Hoạt động hoàn toàn Offline, không cần kết nối mạng hay API key.
-3. **`rapidocr` (Offline Siêu Tốc qua ONNX Runtime)**:
-   - Tối ưu tốc độ xử lý hàng trăm nghìn trang trên CPU/GPU thông qua ONNX Runtime.
-4. **`easyocr` (Offline qua PyTorch)**:
-   - Động cơ mã nguồn mở hỗ trợ đa ngôn ngữ.
+- **Chính xác tuyệt đối**: Mô hình đa phương thức `gemini-2.5-flash` / `gemini-2.0-flash` hiểu sâu toàn diện ngữ cảnh tiếng Việt (danh từ riêng, địa danh, dấu câu, thanh điệu).
+- **Phân tách trang thông minh**: Tự động nhận diện cấu trúc mở sách đôi thành `=== [TRANG TRÁI] ===` và `=== [TRANG PHẢI] ===`.
+- **Hiệu năng cao**: Tốc độ xử lý song song nhiều luồng (workers), có cơ chế tự động thử lại khi gặp giới hạn tốc độ (Rate Limit 429).
 
 ---
 
@@ -42,14 +31,20 @@ pip install -r requirements.txt
 
 ## 📖 Hướng Dẫn Sử Dụng Nhanh
 
-### 1. Thử nghiệm trên 1 ảnh bất kỳ
-Kiểm tra ngay chất lượng đọc văn bản trên một bức ảnh cụ thể:
+### 🌐 1. Sử Dụng Giao Diện Web Studio (Khuyên dùng)
+Khởi chạy giao diện web để kéo thả trực tiếp file nén `.rar` / `.zip`, theo dõi tiến độ thời gian thực và tải về sách hoàn chỉnh:
 ```bash
-# Thử nghiệm với engine Gemini Vision (chính xác nhất):
-python main.py test-image "data/input/đất yên mỹ- hưng yên/20260814_172125.jpg" --engine gemini
+python main.py web
+# Mở trình duyệt và truy cập: http://localhost:8000
+```
+- **Kéo thả file nén**: Hỗ trợ trực tiếp `.rar` (kể cả RAR4/RAR5), `.zip`, `.7z`.
+- **Giám sát thời gian thực**: Xem thanh tiến độ %, số trang hoàn thành, tốc độ xử lý.
+- **Xem trước trực tiếp (Live Preview)**: Đọc ngay nội dung văn bản tiếng Việt vừa trích xuất.
+- **Tải về thuận tiện**: Tải ngay file sách hoàn chỉnh `.txt` hoặc trọn gói nén `.zip`.
 
-# Hoặc thử nghiệm với RapidOCR:
-python main.py test-image "data/input/đất yên mỹ- hưng yên/20260814_172125.jpg" --engine rapidocr
+### 2. Thử nghiệm trên 1 ảnh bất kỳ qua CLI
+```bash
+python main.py test-image "data/input/đất yên mỹ- hưng yên/20260814_172232.jpg"
 ```
 
 ### 2. Chuẩn bị ảnh đầu vào theo từng Cuốn Sách

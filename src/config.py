@@ -20,27 +20,14 @@ class PathsConfig(BaseModel):
 
 class GeminiConfig(BaseModel):
     api_key: str = ""
-    model_name: str = "gemini-2.5-flash"
+    model_name: str = "gemini-3.5-flash-lite"
     temperature: float = 0.0
-    max_retries: int = 3
+    max_retries: int = 8
 
 
 class OCRConfig(BaseModel):
-    engine: str = "gemini"  # "gemini", "vietocr", "rapidocr", "easyocr"
-    # Gemini Vision options
+    engine: str = "gemini"
     gemini: GeminiConfig = Field(default_factory=GeminiConfig)
-    # VietOCR options
-    vietocr_model: str = "vgg_transformer"
-    vietocr_device: str = "cpu"
-    # RapidOCR options
-    use_angle_cls: bool = True
-    det_limit_side_len: int = 960
-    min_score_thresh: float = 0.3
-    # EasyOCR options
-    languages: list = ["vi", "en"]
-    gpu: bool = False
-    rec_batch_size: int = 8
-    beam_width: int = 3
 
 
 class PreprocessingConfig(BaseModel):
