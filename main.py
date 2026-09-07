@@ -339,7 +339,7 @@ def test_image(
 @app.command()
 def web(
     host: str = typer.Option("0.0.0.0", "--host", "-h", help="Địa chỉ host chạy server"),
-    port: int = typer.Option(8000, "--port", "-p", help="Cổng mạng (port)"),
+    port: int = typer.Option(int(os.environ.get("PORT", 8000)), "--port", "-p", help="Cổng mạng (port)"),
     reload: bool = typer.Option(False, "--reload", "-r", help="Tự động reload khi có thay đổi code")
 ):
     """

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Generator, Tuple, List, Optional
 
 SUPPORTED_IMAGE_EXTENSIONS = {
-    ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff", ".tif"
+    ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff", ".tif", ".heic", ".heif"
 }
 
 
@@ -30,7 +30,7 @@ def get_book_folders(input_dir: str | Path) -> List[Path]:
     base_path = Path(input_dir).resolve()
     if not base_path.exists():
         return []
-    folders = [p for p in base_path.iterdir() if p.is_dir()]
+    folders = [p for p in base_path.iterdir() if p.is_dir() and not p.name.startswith(".")]
     return sorted(folders, key=lambda p: natural_sort_key(p.name))
 
 

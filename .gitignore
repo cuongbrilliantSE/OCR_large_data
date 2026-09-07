@@ -1,4 +1,4 @@
-﻿# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -33,3 +33,7 @@ data/output/*
 logs/*
 !logs/.gitkeep
 *.log
+
+# Cache & local tools
+.freebuff/
+.cache/

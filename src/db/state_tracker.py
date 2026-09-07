@@ -201,6 +201,7 @@ class StateTracker:
                     SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) AS failed
                 FROM tasks
                 GROUP BY book_name
+                HAVING NOT book_name LIKE '.%'
                 ORDER BY book_name ASC;
             """)
             books = []

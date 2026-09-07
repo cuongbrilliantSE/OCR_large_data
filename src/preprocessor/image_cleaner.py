@@ -4,6 +4,12 @@ from PIL import Image, ImageOps
 from pathlib import Path
 from typing import Tuple, Optional, Dict, Any, List
 
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+except ImportError:
+    pass
+
 
 class ImageCleaner:
     def __init__(

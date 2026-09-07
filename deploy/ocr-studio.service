@@ -1,0 +1,20 @@
+[Unit]
+Description=OCR Large Data Studio Web Service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/OCR_large_data
+EnvironmentFile=/var/www/OCR_large_data/.env
+ExecStart=/var/www/OCR_large_data/venv/bin/python main.py web --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5s
+KillMode=process
+
+# Limits for processing large images and files
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

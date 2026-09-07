@@ -1,3 +1,13 @@
+---
+title: Book OCR Studio AI
+emoji: 📚
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Large-Scale Image to Text OCR Pipeline 🚀
 
 Hệ thống OCR hiệu năng cao (High-throughput Batch OCR Pipeline) được thiết kế chuyên biệt để chuyển đổi **hàng chục nghìn đến hàng triệu file ảnh sách sang văn bản (`.txt` và `JSONL`)**, hỗ trợ đa tiến trình, tối ưu hóa ảnh đầu vào và tận dụng sức mạnh vượt trội của **Google Gemini Vision AI (chính xác 100% tiếng Việt có dấu)**.
