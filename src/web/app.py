@@ -1,24 +1,26 @@
 import os
+import re
 import shutil
 import tempfile
+import urllib.parse
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Body
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from src.web.archive_extractor import extract_archive
 from src.web.gdrive_downloader import is_gdrive_url, download_and_extract_gdrive, gdrive_task_manager
 from src.web.job_manager import OCRJobManager
-
-
+from src.db.book_repository import BookRepository, slugify
+from src.db.hf_dataset_sync import HFDatasetSync
 
 app = FastAPI(
     title="Book OCR Studio API",
     description="High-throughput Large-Scale Image to Text OCR Pipeline",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 app.add_middleware(
@@ -29,12 +31,48 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Job Manager
+# Initialize Job Manager & Book Repository
 manager = OCRJobManager()
+book_repo = BookRepository()
+dataset_syncer = HFDatasetSync()
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 INDEX_HTML = STATIC_DIR / "index.html"
+LIBRARY_HTML = STATIC_DIR / "library.html"
+READER_HTML = STATIC_DIR / "reader.html"
 
+# Mount static covers directory
+COVERS_DIR = Path("data/covers")
+COVERS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/covers", StaticFiles(directory=str(COVERS_DIR)), name="covers")
+
+
+def extract_gdrive_id(url: str) -> Optional[str]:
+    """Extract folder ID or file ID from Google Drive URL."""
+    match = re.search(r"folders/([a-zA-Z0-9_-]+)", url)
+    if match:
+        return match.group(1)
+    match = re.search(r"id=([a-zA-Z0-9_-]+)", url)
+    if match:
+        return match.group(1)
+    match = re.search(r"file/d/([a-zA-Z0-9_-]+)", url)
+    if match:
+        return match.group(1)
+    return None
+
+
+@app.on_event("startup")
+async def on_startup():
+    """Sync local books and pull cloud library manifest on startup."""
+    try:
+        book_repo.sync_all_books()
+        if dataset_syncer.is_configured():
+            dataset_syncer.pull_manifest_and_restore(book_repo)
+    except Exception as e:
+        print(f"[App Startup] Sync error: {e}")
+
+
+# ── Web Pages ────────────────────────────────────────────────────────────────
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def get_index():
@@ -43,15 +81,126 @@ async def get_index():
     return HTMLResponse(content=INDEX_HTML.read_text(encoding="utf-8"))
 
 
+@app.api_route("/library", methods=["GET", "HEAD"], response_class=HTMLResponse)
+async def get_library():
+    if not LIBRARY_HTML.is_file():
+        raise HTTPException(status_code=404, detail="Library HTML not found")
+    return HTMLResponse(content=LIBRARY_HTML.read_text(encoding="utf-8"))
+
+
+@app.api_route("/books/{slug}", methods=["GET", "HEAD"], response_class=HTMLResponse)
+async def get_reader(slug: str):
+    if not READER_HTML.is_file():
+        raise HTTPException(status_code=404, detail="Reader HTML not found")
+
+    book = book_repo.get_book_by_slug(slug)
+    if not book and dataset_syncer.is_configured():
+        dataset_syncer.pull_manifest_and_restore(book_repo)
+        book = book_repo.get_book_by_slug(slug)
+
+    if not book:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy cuốn sách với mã: {slug}")
+
+    html = READER_HTML.read_text(encoding="utf-8")
+    title = book.get("title", "")
+    category = book.get("category", "Tài liệu")
+    summary = book.get("summary", "") or "Cuốn sách đã được số hóa hoàn chỉnh bằng AI."
+    cover = book.get("cover_image") or "/covers/default-book.jpg"
+    total_pages = str(book.get("total_pages", 0))
+    word_count = f"{book.get('word_count', 0):,}"
+
+    html = html.replace("{{BOOK_TITLE}}", title)
+    html = html.replace("{{BOOK_CATEGORY}}", category)
+    html = html.replace("{{BOOK_SUMMARY}}", summary)
+    html = html.replace("{{BOOK_COVER}}", cover)
+    html = html.replace("{{TOTAL_PAGES}}", total_pages)
+    html = html.replace("{{WORD_COUNT}}", word_count)
+    html = html.replace("{{BOOK_SLUG}}", slug)
+    html = html.replace("{{BOOK_TITLE_URL}}", urllib.parse.quote(title))
+
+    return HTMLResponse(content=html)
+
+
+# ── Library API Endpoints ────────────────────────────────────────────────────
+
+@app.get("/api/library/books")
+async def api_library_books(
+    category: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    sort: str = Query("newest"),
+    limit: int = Query(50),
+    offset: int = Query(0)
+):
+    return JSONResponse(book_repo.list_books(category=category, search=search, sort=sort, limit=limit, offset=offset))
+
+
+@app.get("/api/library/categories")
+async def api_library_categories():
+    return JSONResponse(book_repo.get_categories_stats())
+
+
+@app.get("/api/library/books/{slug}")
+async def api_library_book_detail(slug: str):
+    book = book_repo.get_book_by_slug(slug)
+    if not book:
+        raise HTTPException(status_code=404, detail="Không tìm thấy sách")
+    return JSONResponse(book)
+
+
+@app.get("/api/library/books/{slug}/text")
+async def api_library_book_text(slug: str):
+    book = book_repo.get_book_by_slug(slug)
+    if not book:
+        raise HTTPException(status_code=404, detail="Không tìm thấy sách")
+
+    title = book["title"]
+    # Ensure text exists locally or pull from HF Dataset
+    text_path = dataset_syncer.ensure_book_text_file(slug, title)
+    if not text_path or not text_path.is_file():
+        text_path = Path(manager.config.paths.output_dir) / f"{title}.txt"
+
+    if not text_path.is_file():
+        # Attempt to package if pages exist
+        text_path, _ = manager.merge_and_package_book(title)
+
+    if not text_path or not text_path.is_file():
+        raise HTTPException(status_code=404, detail="Nội dung văn bản sách chưa sẵn sàng")
+
+    return PlainTextResponse(text_path.read_text(encoding="utf-8", errors="ignore"))
+
+
+@app.patch("/api/library/books/{slug}")
+async def api_library_update_book(
+    slug: str,
+    payload: dict = Body(...)
+):
+    updated = book_repo.update_metadata(
+        slug=slug,
+        title=payload.get("title"),
+        category=payload.get("category"),
+        tags=payload.get("tags"),
+        summary=payload.get("summary"),
+        is_public=payload.get("is_public")
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Không tìm thấy sách để cập nhật")
+
+    # Sync updated metadata to cloud
+    if dataset_syncer.is_configured():
+        dataset_syncer.push_book_async(slug)
+
+    return JSONResponse(updated)
+
+
+# ── OCR Pipeline API Endpoints ───────────────────────────────────────────────
+
 @app.post("/api/upload")
 async def upload_archive(
     file: UploadFile = File(...),
     book_name: Optional[str] = Form(None),
-    workers: int = Form(2)
+    workers: int = Form(2),
+    force: bool = Form(False)
 ):
-    """
-    Receives an uploaded archive (.rar, .zip, .7z), extracts it, and starts the OCR pipeline.
-    """
     original_filename = file.filename
     ext = Path(original_filename).suffix.lower()
 
@@ -61,7 +210,18 @@ async def upload_archive(
             detail=f"Định dạng file không được hỗ trợ: {ext}. Vui lòng tải lên file .rar, .zip hoặc .7z."
         )
 
-    # Save uploaded file to temp file
+    # Deduplication check by book name
+    target_name = (book_name or Path(original_filename).stem).strip()
+    if not force:
+        dup = book_repo.find_duplicate(title=target_name)
+        if dup and dup.get("status") == "COMPLETED":
+            return JSONResponse({
+                "status": "already_exists",
+                "message": f"Cuốn sách '{dup['title']}' đã có sẵn trong Thư viện!",
+                "book": dup,
+                "reader_url": f"/books/{dup['slug']}"
+            })
+
     temp_dir = Path(tempfile.gettempdir())
     temp_archive_path = temp_dir / f"upload_{os.getpid()}_{original_filename}"
 
@@ -75,6 +235,16 @@ async def upload_archive(
             input_root=input_root,
             custom_book_name=book_name
         )
+
+        if not force:
+            dup = book_repo.find_duplicate(title=actual_book_name)
+            if dup and dup.get("status") == "COMPLETED":
+                return JSONResponse({
+                    "status": "already_exists",
+                    "message": f"Cuốn sách '{dup['title']}' đã có sẵn trong Thư viện!",
+                    "book": dup,
+                    "reader_url": f"/books/{dup['slug']}"
+                })
 
         # Start OCR job
         manager.add_log(actual_book_name, f"Đã giải nén thành công {image_count} file ảnh vào thư mục '{actual_book_name}'.")
@@ -98,17 +268,27 @@ async def upload_archive(
 async def start_gdrive_download(
     url: str = Form(...),
     book_name: Optional[str] = Form(None),
-    workers: int = Form(2)
+    workers: int = Form(2),
+    force: bool = Form(False)
 ):
-    """
-    Initiates asynchronous Google Drive download and extraction, returning task_id for real-time tracking.
-    """
     clean_url = url.strip()
     if not clean_url or not is_gdrive_url(clean_url):
         raise HTTPException(
             status_code=400,
             detail="Đường dẫn không hợp lệ. Vui lòng nhập link chia sẻ Google Drive (dạng file hoặc folder)."
         )
+
+    # Deduplication Check
+    gdrive_id = extract_gdrive_id(clean_url)
+    if not force:
+        dup = book_repo.find_duplicate(source_id=gdrive_id, title=book_name)
+        if dup and dup.get("status") == "COMPLETED":
+            return JSONResponse({
+                "status": "already_exists",
+                "message": f"Cuốn sách '{dup['title']}' đã có sẵn trong Thư viện!",
+                "book": dup,
+                "reader_url": f"/books/{dup['slug']}"
+            })
 
     task_id = gdrive_task_manager.create_task()
 
@@ -125,6 +305,15 @@ async def start_gdrive_download(
                 status_callback=cb
             )
 
+            # Store source_id mapping in book_repo
+            book_repo.upsert_book(
+                title=actual_book_name,
+                total_pages=image_count,
+                source_type="gdrive",
+                source_id=gdrive_id or "",
+                status="PROCESSING"
+            )
+
             gdrive_task_manager.update_task(task_id, f"Hoàn tất tải về và giải nén {image_count} trang ảnh! Đang khởi chạy OCR...", {
                 "status": "completed",
                 "percent": 100.0,
@@ -138,18 +327,22 @@ async def start_gdrive_download(
         except Exception as e:
             err_msg = str(e)
             if any(keyword in err_msg for keyword in ["Cannot retrieve the public link", "Permission denied", "Failed to retrieve", "FileURLRetrievalError"]):
-                err_msg = "Không thể truy cập file/thư mục trên Google Drive. Vui lòng kiểm tra lại link và đảm bảo quyền chia sẻ đã được bật: 'Bất kỳ ai có đường liên kết đều có thể xem' (Anyone with the link can view)."
-            gdrive_task_manager.update_task(task_id, f"Lỗi: {err_msg}", {
+                clean_err = "Không thể tải từ Google Drive do quyền riêng tư. Vui lòng chuyển link sang chế độ: 'Bất kỳ ai có đường liên kết đều có thể xem' (Anyone with the link can view)."
+            else:
+                clean_err = f"Lỗi tải từ Google Drive: {err_msg}"
+
+            gdrive_task_manager.update_task(task_id, clean_err, {
                 "status": "error",
-                "error": err_msg
+                "error": clean_err
             })
 
     import threading
     threading.Thread(target=_worker, daemon=True).start()
 
     return JSONResponse({
-        "status": "started",
-        "task_id": task_id
+        "status": "accepted",
+        "task_id": task_id,
+        "message": "Đang kết nối và tải ảnh từ Google Drive..."
     })
 
 
@@ -157,80 +350,33 @@ async def start_gdrive_download(
 async def get_gdrive_status(task_id: str):
     task = gdrive_task_manager.get_task(task_id)
     if not task:
-        raise HTTPException(status_code=404, detail="Không tìm thấy tác vụ tải Google Drive này.")
+        raise HTTPException(status_code=404, detail="Không tìm thấy tác vụ tải Drive.")
     return JSONResponse(task)
 
 
-@app.post("/api/gdrive")
-async def process_gdrive_link(
-    url: str = Form(...),
-    book_name: Optional[str] = Form(None),
-    workers: int = Form(2)
-):
-    """
-    Synchronous fallback for Google Drive download and extraction.
-    """
-    clean_url = url.strip()
-    if not clean_url or not is_gdrive_url(clean_url):
-        raise HTTPException(
-            status_code=400,
-            detail="Đường dẫn không hợp lệ. Vui lòng nhập link chia sẻ Google Drive (dạng file hoặc folder)."
-        )
-
-    try:
-        input_root = Path(manager.config.paths.input_dir)
-        actual_book_name, target_dir, image_count = download_and_extract_gdrive(
-            url=clean_url,
-            input_root=input_root,
-            custom_book_name=book_name
-        )
-
-        manager.add_log(actual_book_name, f"Đã kéo thành công từ Google Drive {image_count} file ảnh vào thư mục '{actual_book_name}'.")
-        job = manager.start_job(actual_book_name, num_workers=workers)
-
-        return JSONResponse({
-            "status": "success",
-            "book_name": actual_book_name,
-            "images_count": image_count,
-            "job": job
-        })
-
-    except Exception as e:
-        err_msg = str(e)
-        if any(keyword in err_msg for keyword in ["Cannot retrieve the public link", "Permission denied", "Failed to retrieve", "FileURLRetrievalError"]):
-            err_msg = "Không thể truy cập file/thư mục trên Google Drive. Vui lòng kiểm tra lại link và đảm bảo quyền chia sẻ đã được bật: 'Bất kỳ ai có đường liên kết đều có thể xem' (Anyone with the link can view)."
-        raise HTTPException(status_code=400, detail=err_msg)
-
-
-
-
-@app.get("/api/status/{book_name}")
-
-async def get_status(book_name: str):
-    job = manager.refresh_stats(book_name)
-    return JSONResponse(job)
-
-
-@app.post("/api/start/{book_name}")
-async def start_ocr(book_name: str, workers: Optional[int] = Form(2)):
-    job = manager.start_job(book_name, num_workers=workers)
+@app.get("/api/jobs/{book_name}")
+async def get_job_status(book_name: str):
+    job = manager.get_job(book_name)
+    if not job:
+        job = manager.get_or_create_job(book_name)
+        manager.refresh_stats(book_name)
     return JSONResponse(job)
 
 
 @app.post("/api/pause/{book_name}")
-async def pause_ocr(book_name: str):
+async def pause_job(book_name: str):
     job = manager.pause_job(book_name)
     return JSONResponse(job)
 
 
 @app.post("/api/resume/{book_name}")
-async def resume_ocr(book_name: str, workers: Optional[int] = Form(2)):
+async def resume_job(book_name: str, workers: int = Form(2)):
     job = manager.start_job(book_name, num_workers=workers)
     return JSONResponse(job)
 
 
 @app.post("/api/retry/{book_name}")
-async def retry_failed_ocr(book_name: str, workers: Optional[int] = Form(2)):
+async def retry_job(book_name: str, workers: int = Form(2)):
     job = manager.retry_failed_job(book_name, num_workers=workers)
     return JSONResponse(job)
 
@@ -255,11 +401,13 @@ async def list_books():
 
 @app.get("/api/download/text/{book_name}")
 async def download_text(book_name: str):
-    # Ensure merged text exists
     txt_path = Path(manager.config.paths.output_dir) / f"{book_name}.txt"
     if not txt_path.is_file():
-        # Try merging on demand
         txt_path, _ = manager.merge_and_package_book(book_name)
+
+    if not txt_path or not txt_path.is_file():
+        slug = slugify(book_name)
+        txt_path = dataset_syncer.ensure_book_text_file(slug, book_name)
 
     if not txt_path or not txt_path.is_file():
         raise HTTPException(status_code=404, detail=f"Không tìm thấy file text hoàn chỉnh của sách '{book_name}'.")
@@ -275,7 +423,6 @@ async def download_text(book_name: str):
 async def download_zip(book_name: str):
     zip_path = Path(manager.config.paths.output_dir) / f"{book_name}_package.zip"
     if not zip_path.is_file():
-        # Package on demand
         _, zip_path = manager.merge_and_package_book(book_name)
 
     if not zip_path or not zip_path.is_file():

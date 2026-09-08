@@ -237,6 +237,24 @@ class OCRJobManager:
         job["output_text_file"] = str(merged_txt_path)
         job["output_zip_file"] = str(zip_path)
         self.add_log(book_name, f"Đã đóng gói hoàn chỉnh file sách ({len(txt_files)} trang)!")
+
+        # 3. Upsert to BookRepository and sync to Hugging Face Dataset
+        try:
+            from src.db.book_repository import BookRepository
+            from src.db.hf_dataset_sync import HFDatasetSync
+            repo = BookRepository()
+            syncer = HFDatasetSync()
+            book = repo.upsert_book(
+                title=book_name,
+                total_pages=len(txt_files),
+                file_size_bytes=merged_txt_path.stat().st_size if merged_txt_path.is_file() else 0,
+                status="COMPLETED"
+            )
+            if book and syncer.is_configured():
+                syncer.push_book_async(book["slug"])
+        except Exception as e:
+            print(f"[JobManager] Error syncing book to repository/dataset: {e}")
+
         return merged_txt_path, zip_path
 
     def list_books(self) -> List[Dict[str, Any]]:

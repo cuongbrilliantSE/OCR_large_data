@@ -53,10 +53,22 @@ if __name__ == "__main__":
 
     demo.server_app.routes.insert(0, Route("/", studio_index, methods=["GET", "HEAD"]))
 
-    # Insert all FastAPI backend routes (/api/books, /api/upload, /api/gdrive/start, etc.)
+    # Insert all FastAPI backend routes (/library, /books/{slug}, /api/*, /covers, etc.)
     for r in fastapi_app.routes:
         if hasattr(r, "path") and r.path != "/":
             demo.server_app.routes.insert(0, r)
+
+    # Sync local library and restore persistent records from HF Dataset
+    try:
+        from src.db.book_repository import BookRepository
+        from src.db.hf_dataset_sync import HFDatasetSync
+        _repo = BookRepository()
+        _syncer = HFDatasetSync()
+        _repo.sync_all_books()
+        if _syncer.is_configured():
+            _syncer.pull_manifest_and_restore(_repo)
+    except Exception as e:
+        print(f"[app.py] Startup library restore error: {e}")
 
     # Keep server running
     demo.block_thread()

@@ -53,6 +53,16 @@
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center gap-1.5 mr-2">
+          <a href="/" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 transition flex items-center gap-1.5">
+            <i class="ph-bold ph-lightning"></i> OCR Studio
+          </a>
+          <a href="/library" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+            <i class="ph-bold ph-books"></i> Thư Viện Sách
+          </a>
+        </nav>
+
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           AI Vision Engine (Active)
@@ -542,6 +552,13 @@ Chưa có dữ liệu trích xuất...
           submitBtn.disabled = false;
           if (xhr.status === 200) {
             const res = JSON.parse(xhr.responseText);
+            if (res.status === 'already_exists') {
+              uploadProgressContainer.classList.add('hidden');
+              if (confirm(`Cuốn sách "${res.book.title}" đã được số hóa hoàn tất 100% trong Thư viện!\n\nBạn có muốn mở đọc trực tuyến ngay không?`)) {
+                window.location.href = res.reader_url;
+              }
+              return;
+            }
             activeBookName = res.book_name;
             uploadStatusText.textContent = 'Hoàn tất giải nén!';
             setTimeout(() => {
@@ -630,6 +647,17 @@ Chưa có dữ liệu trích xuất...
         }
 
         const data = await res.json();
+
+        if (data.status === 'already_exists') {
+          gdriveStatusContainer.classList.add('hidden');
+          gdriveStatusContainer.classList.remove('flex');
+          gdriveSubmitBtn.disabled = false;
+          if (confirm(`Cuốn sách "${data.book.title}" đã được số hóa hoàn tất 100% trong Thư viện!\n\nBạn có muốn mở đọc trực tuyến ngay không?`)) {
+            window.location.href = data.reader_url;
+          }
+          return;
+        }
+
         const taskId = data.task_id;
 
         // Poll task progress in real time

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-slate-950 text-slate-100" id="htmlRoot">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{BOOK_TITLE}} — Đọc Sách Trực Tuyến</title>
+  <meta name="description" content="{{BOOK_SUMMARY}}">
+  <meta property="og:title" content="{{BOOK_TITLE}} — Số Hóa Sách AI">
+  <meta property="og:description" content="{{BOOK_SUMMARY}}">
+  <meta property="og:image" content="{{BOOK_COVER}}">
+  <meta property="og:type" content="book">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Reader Themes */
+    body.theme-dark {
+      background-color: #030712;
+      color: #f3f4f6;
+    }
+    body.theme-light {
+      background-color: #f9fafb;
+      color: #111827;
+    }
+    body.theme-sepia {
+      background-color: #fbf0d9;
+      color: #3b2a1a;
+    }
+
+    body.theme-light .reader-header,
+    body.theme-light .reader-sidebar {
+      background-color: #ffffff;
+      border-color: #e5e7eb;
+    }
+    body.theme-sepia .reader-header,
+    body.theme-sepia .reader-sidebar {
+      background-color: #f4e8cc;
+      border-color: #e0d0b0;
+    }
+
+    /* Text highlight */
+    mark.search-highlight {
+      background-color: #fef08a;
+      color: #1e293b;
+      padding: 0.1em 0.25em;
+      border-radius: 0.25rem;
+    }
+    mark.search-active {
+      background-color: #f97316;
+      color: white;
+    }
+  </style>
+</head>
+<body class="theme-dark min-h-full flex flex-col font-sans antialiased transition-colors duration-200">
+
+  <!-- Reader Top Bar -->
+  <header class="reader-header border-b border-slate-800/80 bg-slate-900/90 backdrop-blur sticky top-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6">
+    <!-- Left: Navigation & Book Info -->
+    <div class="flex items-center gap-3 min-w-0">
+      <a href="/library" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white transition flex items-center justify-center shrink-0" title="Quay lại Thư viện">
+        <i class="ph-bold ph-arrow-left text-lg"></i>
+      </a>
+      <div class="truncate">
+        <div class="flex items-center gap-2">
+          <h1 id="bookTitleDisplay" class="text-sm sm:text-base font-bold text-white truncate">
+            {{BOOK_TITLE}}
+          </h1>
+          <span id="categoryBadge" class="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            {{BOOK_CATEGORY}}
+          </span>
+        </div>
+        <p class="text-[11px] text-slate-400 flex items-center gap-2">
+          <span id="pageCountDisplay">{{TOTAL_PAGES}} trang</span>
+          <span>•</span>
+          <span id="wordCountDisplay">{{WORD_COUNT}} từ</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Right: Controls & Actions -->
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <!-- Search Trigger Button -->
+      <div class="relative hidden md:flex items-center">
+        <input 
+          type="text" 
+          id="inBookSearch" 
+          placeholder="Tìm từ khóa trong sách..." 
+          class="pl-8 pr-16 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 w-52 transition"
+        >
+        <i class="ph-bold ph-magnifying-glass absolute left-2.5 text-slate-400 text-sm"></i>
+        <span id="searchMatchCount" class="absolute right-2 text-[10px] text-slate-400 font-mono"></span>
+      </div>
+
+      <!-- Font Size Adjuster -->
+      <div class="hidden sm:flex items-center bg-slate-800/80 border border-slate-700/80 rounded-xl p-0.5 text-xs">
+        <button id="fontDecBtn" class="px-2 py-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition" title="Giảm cỡ chữ">A-</button>
+        <button id="fontIncBtn" class="px-2 py-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition" title="Tăng cỡ chữ">A+</button>
+      </div>
+
+      <!-- Theme Switcher -->
+      <div class="flex items-center bg-slate-800/80 border border-slate-700/80 rounded-xl p-0.5 text-xs">
+        <button onclick="setTheme('dark')" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition" title="Giao diện tối">
+          <i class="ph-bold ph-moon"></i>
+        </button>
+        <button onclick="setTheme('sepia')" class="p-1.5 rounded-lg text-amber-300 hover:text-amber-100 hover:bg-slate-700 transition" title="Giao diện trang sách (Sepia)">
+          <i class="ph-bold ph-book"></i>
+        </button>
+        <button onclick="setTheme('light')" class="p-1.5 rounded-lg text-yellow-400 hover:text-yellow-200 hover:bg-slate-700 transition" title="Giao diện sáng">
+          <i class="ph-bold ph-sun"></i>
+        </button>
+      </div>
+
+      <!-- Share Button -->
+      <button onclick="copyShareLink()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition" title="Chia sẻ sách">
+        <i class="ph-bold ph-share-network text-emerald-400"></i>
+        <span class="hidden sm:inline">Chia sẻ</span>
+      </button>
+
+      <!-- Download Button -->
+      <a id="downloadTxtBtn" href="/api/download/text/{{BOOK_TITLE_URL}}" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition">
+        <i class="ph-bold ph-download-simple"></i>
+        <span class="hidden sm:inline">Tải</span> .TXT
+      </a>
+    </div>
+  </header>
+
+  <!-- Reader Body Container -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar: Table of Contents & Page Navigator -->
+    <aside id="sidebar" class="reader-sidebar w-64 border-r border-slate-800/80 bg-slate-900/60 flex flex-col shrink-0 overflow-hidden transition-all duration-300 hidden md:flex">
+      <div class="p-3 border-b border-slate-800/80 flex items-center justify-between">
+        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="ph-bold ph-list-numbers text-emerald-400"></i> Danh sách trang
+        </span>
+        <span id="tocCount" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">0 trang</span>
+      </div>
+
+      <!-- Pages Scroll List -->
+      <div id="pagesList" class="flex-1 overflow-y-auto p-2 space-y-1 text-xs">
+        <div class="text-center py-6 text-slate-500 text-xs">Đang tải mục lục...</div>
+      </div>
+    </aside>
+
+    <!-- Main Text Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12" id="readerScrollArea">
+      <div class="max-w-3xl mx-auto space-y-6">
+        
+        <!-- Book Cover & Header Intro in Reader -->
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 rounded-3xl bg-slate-900/40 border border-slate-800/60">
+          <img 
+            id="bookCoverImg" 
+            src="{{BOOK_COVER}}" 
+            alt="{{BOOK_TITLE}}" 
+            class="w-32 h-44 rounded-2xl object-cover object-top shadow-xl shadow-black/50 border border-slate-800"
+            onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80';"
+          />
+          <div class="space-y-2 text-center sm:text-left flex-1">
+            <h2 class="text-xl sm:text-2xl font-black text-white leading-tight">
+              {{BOOK_TITLE}}
+            </h2>
+            <p class="text-xs text-emerald-400 font-medium">
+              Thể loại: {{BOOK_CATEGORY}}
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed pt-1">
+              {{BOOK_SUMMARY}}
+            </p>
+            <div class="pt-3 flex flex-wrap gap-2 justify-center sm:justify-start">
+              <a href="/api/download/text/{{BOOK_TITLE_URL}}" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                <i class="ph-bold ph-download-simple"></i> Tải toàn bộ sách (.TXT)
+              </a>
+              <a href="/api/download/zip/{{BOOK_TITLE_URL}}" class="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                <i class="ph-bold ph-file-zip"></i> Tải gói đầy đủ (.ZIP)
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Book Reading Text Container -->
+        <article 
+          id="textContentArea" 
+          class="space-y-8 text-base leading-relaxed tracking-normal font-sans" 
+          style="font-size: 16px; line-height: 1.8;"
+        >
+          <div class="text-center py-12 text-slate-500">
+            <i class="ph-bold ph-spinner animate-spin text-3xl text-emerald-400 mb-2 inline-block"></i>
+            <p class="text-sm">Đang nạp toàn văn nội dung sách...</p>
+          </div>
+        </article>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2 px-4 py-3 rounded-2xl bg-slate-900 border border-emerald-500/30 text-white text-xs shadow-xl shadow-black/40">
+    <i class="ph-bold ph-check-circle text-emerald-400 text-lg"></i>
+    <span id="toastMsg">Đã sao chép liên kết chia sẻ!</span>
+  </div>
+
+  <script>
+    const bookSlug = "{{BOOK_SLUG}}";
+    const bookTitle = "{{BOOK_TITLE}}";
+    let rawBookContent = "";
+    let currentFontSize = 16;
+    let pageAnchors = [];
+
+    const textContentArea = document.getElementById('textContentArea');
+    const pagesList = document.getElementById('pagesList');
+    const tocCount = document.getElementById('tocCount');
+    const inBookSearch = document.getElementById('inBookSearch');
+    const searchMatchCount = document.getElementById('searchMatchCount');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    function showToast(msg) {
+      toastMsg.textContent = msg;
+      toast.classList.remove('translate-y-12', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-12', 'opacity-0');
+      }, 2500);
+    }
+
+    function copyShareLink() {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Đã sao chép liên kết đọc sách vào clipboard!');
+      }).catch(() => {
+        prompt('Sao chép đường liên kết này:', url);
+      });
+    }
+
+    function setTheme(theme) {
+      document.body.className = `theme-${theme} min-h-full flex flex-col font-sans antialiased transition-colors duration-200`;
+      localStorage.setItem('reader_theme', theme);
+    }
+
+    // Restore saved theme
+    const savedTheme = localStorage.getItem('reader_theme') || 'dark';
+    setTheme(savedTheme);
+
+    // Font size controls
+    document.getElementById('fontIncBtn').addEventListener('click', () => {
+      if (currentFontSize < 28) {
+        currentFontSize += 2;
+        textContentArea.style.fontSize = `${currentFontSize}px`;
+      }
+    });
+
+    document.getElementById('fontDecBtn').addEventListener('click', () => {
+      if (currentFontSize > 12) {
+        currentFontSize -= 2;
+        textContentArea.style.fontSize = `${currentFontSize}px`;
+      }
+    });
+
+    async function loadBookContent() {
+      try {
+        const res = await fetch(`/api/library/books/${bookSlug}/text`);
+        if (!res.ok) throw new Error('Failed to fetch book content');
+        rawBookContent = await res.text();
+        renderFormattedText(rawBookContent);
+      } catch (err) {
+        console.error('Error:', err);
+        textContentArea.innerHTML = `
+          <div class="py-12 text-center text-red-400">
+            <i class="ph-bold ph-warning text-3xl mb-2 inline-block"></i>
+            <p class="text-sm">Không thể tải nội dung cuốn sách này hoặc file chưa sẵn sàng.</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderFormattedText(fullText) {
+      // Split pages by "=== [Trang X/Y] page_xxxx.txt ==="
+      const pageRegex = /===\s*\[Trang\s+(\d+)\/(\d+)\]\s+([^=]+)\s*===/g;
+      let match;
+      let lastIndex = 0;
+      let pages = [];
+
+      while ((match = pageRegex.exec(fullText)) !== null) {
+        const pageNum = match[1];
+        const totalP = match[2];
+        const fileName = match[3].trim();
+        const startPos = match.index;
+
+        if (pages.length > 0) {
+          pages[pages.length - 1].content = fullText.substring(pages[pages.length - 1].endHeaderPos, startPos).trim();
+        }
+
+        pages.push({
+          num: pageNum,
+          total: totalP,
+          fileName: fileName,
+          endHeaderPos: pageRegex.lastIndex
+        });
+      }
+
+      if (pages.length > 0) {
+        pages[pages.length - 1].content = fullText.substring(pages[pages.length - 1].endHeaderPos).trim();
+      } else {
+        // Fallback if no page headers
+        pages.push({
+          num: '1',
+          total: '1',
+          fileName: 'full.txt',
+          content: fullText
+        });
+      }
+
+      tocCount.textContent = `${pages.length} trang`;
+      pagesList.innerHTML = pages.map(p => `
+        <a 
+          href="#page-${p.num}" 
+          class="toc-item flex items-center justify-between p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition"
+          data-page="${p.num}"
+        >
+          <span class="font-medium">Trang ${p.num}</span>
+          <span class="text-[10px] text-slate-500 font-mono">${p.fileName}</span>
+        </a>
+      `).join('');
+
+      // Render book pages in reading area
+      textContentArea.innerHTML = pages.map(p => `
+        <section id="page-${p.num}" class="page-block py-6 border-b border-slate-800/40 relative">
+          <!-- Page Header Divider -->
+          <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-800/80 text-xs font-mono text-emerald-400">
+            <span class="px-2.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 font-bold">
+              Trang ${p.num} / ${p.total}
+            </span>
+            <span class="text-slate-500">${escapeHtml(p.fileName)}</span>
+          </div>
+
+          <!-- Page Content -->
+          <div class="page-text whitespace-pre-wrap select-text leading-relaxed">
+            ${escapeHtml(p.content)}
+          </div>
+        </section>
+      `).join('');
+    }
+
+    // In-Book Search with Highlights
+    let searchMatches = [];
+    let currentMatchIndex = -1;
+
+    inBookSearch.addEventListener('input', (e) => {
+      const q = e.target.value.trim();
+      if (!q) {
+        searchMatchCount.textContent = '';
+        renderFormattedText(rawBookContent);
+        return;
+      }
+
+      // Highlight in text
+      const regex = new RegExp(`(${escapeRegex(q)})`, 'gi');
+      const textBlocks = document.querySelectorAll('.page-text');
+      let count = 0;
+
+      textBlocks.forEach(block => {
+        const orig = block.innerText;
+        if (regex.test(orig)) {
+          const replaced = orig.replace(regex, (match) => {
+            count++;
+            return `<mark class="search-highlight">${match}</mark>`;
+          });
+          block.innerHTML = replaced;
+        } else {
+          block.innerText = orig;
+        }
+      });
+
+      searchMatchCount.textContent = count > 0 ? `${count} kết quả` : '0';
+    });
+
+    function escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Load book content
+    loadBookContent();
+  </script>
+</body>
+</html>
