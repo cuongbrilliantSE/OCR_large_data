@@ -53,8 +53,8 @@ if __name__ == "__main__":
 
     demo.server_app.routes.insert(0, Route("/", studio_index, methods=["GET", "HEAD"]))
 
-    # Insert all FastAPI backend routes (/library, /books/{slug}, /api/*, /covers, etc.)
-    for r in fastapi_app.routes:
+    # Insert all FastAPI backend routes (/library, /books/{slug}, /api/*, /covers, etc.) in correct priority order
+    for r in reversed(fastapi_app.routes):
         if hasattr(r, "path") and r.path != "/":
             demo.server_app.routes.insert(0, r)
 
