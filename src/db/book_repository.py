@@ -425,48 +425,44 @@ class BookRepository:
 
         book_input = self.input_dir / book["title"]
         if not book_input.is_dir():
-            # If input dir doesn't match title exactly, try loose match
-            candidates = [d for d in self.input_dir.iterdir() if d.is_dir() and slugify(d.name) == slug]
-            if candidates:
-                book_input = candidates[0]
+            if self.input_dir.is_dir():
+                candidates = [d for d in self.input_dir.iterdir() if d.is_dir() and slugify(d.name) == slug]
+                book_input = candidates[0] if candidates else None
             else:
-                return None
+                book_input = None
 
-        valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".bmp", ".tiff"}
-        images = sorted(
-            [f for f in book_input.iterdir() if f.is_file() and f.suffix.lower() in valid_exts and not f.name.startswith(".")],
-            key=lambda f: self._natural_sort_key(f.name)
-        )
+        if book_input and book_input.is_dir():
+            valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".bmp", ".tiff"}
+            images = sorted(
+                [f for f in book_input.iterdir() if f.is_file() and f.suffix.lower() in valid_exts and not f.name.startswith(".")],
+                key=lambda f: self._natural_sort_key(f.name)
+            )
 
-        if not images or page_num < 1 or page_num > len(images):
-            # Fallback for page 1 if cover exists
-            if page_num == 1:
-                cover = self.covers_dir / f"{slug}.jpg"
-                if cover.is_file():
-                    return cover
-            return None
+            if images and 1 <= page_num <= len(images):
+                src_image = images[page_num - 1]
+                ext = src_image.suffix.lower()
 
-        src_image = images[page_num - 1]
-        ext = src_image.suffix.lower()
+                # If it's a web-compatible image format already, return it directly
+                if ext in {".jpg", ".jpeg", ".png", ".webp"}:
+                    return src_image
 
-        # If it's a web-compatible image format already, return it directly
-        if ext in {".jpg", ".jpeg", ".png", ".webp"}:
-            return src_image
+                # If it's HEIC or TIFF, convert and cache as JPEG
+                try:
+                    cached_file.parent.mkdir(parents=True, exist_ok=True)
+                    with Image.open(src_image) as im:
+                        im = im.convert("RGB")
+                        im.save(cached_file, format="JPEG", quality=88, optimize=True)
+                    return cached_file
+                except Exception as e:
+                    print(f"[BookRepository] Error converting {src_image.name} to cached JPEG: {e}")
 
-        # If it's HEIC or TIFF, convert and cache as JPEG
-        cached_file = self.cache_dir / slug / f"page_{page_num:04d}.jpg"
-        if cached_file.is_file() and cached_file.stat().st_size > 0:
-            return cached_file
+        # Fallback for page 1 if cover exists
+        if page_num == 1:
+            cover = self.covers_dir / f"{slug}.jpg"
+            if cover.is_file() and cover.stat().st_size > 0:
+                return cover
 
-        try:
-            cached_file.parent.mkdir(parents=True, exist_ok=True)
-            with Image.open(src_image) as im:
-                im = im.convert("RGB")
-                im.save(cached_file, format="JPEG", quality=88, optimize=True)
-            return cached_file
-        except Exception as e:
-            print(f"[BookRepository] Error converting {src_image.name} to cached JPEG: {e}")
-            return None
+        return None
 
     def get_artifact_dossier(self, slug: str) -> Optional[Dict[str, Any]]:
         """
@@ -479,9 +475,11 @@ class BookRepository:
 
         book_dir = self.output_dir / book["title"]
         if not book_dir.is_dir():
-            candidates = [d for d in self.output_dir.iterdir() if d.is_dir() and slugify(d.name) == slug]
-            if candidates:
-                book_dir = candidates[0]
+            if self.output_dir.is_dir():
+                candidates = [d for d in self.output_dir.iterdir() if d.is_dir() and slugify(d.name) == slug]
+                book_dir = candidates[0] if candidates else None
+            else:
+                book_dir = None
 
         # Scan input images count for pairing
         book_input = self.input_dir / book["title"]
@@ -489,9 +487,14 @@ class BookRepository:
         total_images = 0
         if book_input.is_dir():
             total_images = len([f for f in book_input.iterdir() if f.is_file() and f.suffix.lower() in valid_exts and not f.name.startswith(".")])
+        elif self.input_dir.is_dir():
+            for d in self.input_dir.iterdir():
+                if d.is_dir() and slugify(d.name) == slug:
+                    total_images = len([f for f in d.iterdir() if f.is_file() and f.suffix.lower() in valid_exts and not f.name.startswith(".")])
+                    break
 
         pages = []
-        if book_dir.is_dir():
+        if book_dir and book_dir.is_dir():
             txt_files = sorted(
                 [f for f in book_dir.iterdir() if f.is_file() and f.suffix.lower() == ".txt" and not f.name.startswith(".")],
                 key=lambda f: self._natural_sort_key(f.name)
@@ -512,14 +515,20 @@ class BookRepository:
                     "text": content
                 })
 
-        # Fallback if no separate page files but single aggregated text file exists
+        # Fallback if no separate page files but aggregated text file exists
         if not pages:
             text_file = self.output_dir / f"{book['title']}.txt"
+            if not text_file.is_file() and self.output_dir.is_dir():
+                for f in self.output_dir.iterdir():
+                    if f.is_file() and f.suffix.lower() == ".txt" and slugify(f.stem) == slug:
+                        text_file = f
+                        break
+
             if text_file.is_file():
                 try:
                     full_text = text_file.read_text(encoding="utf-8", errors="ignore")
                     # Split by === [Trang X/Y] ===
-                    page_regex = re.compile(r"===\s*\[Trang\s+(\d+)/\d+\]\s+([^=]+)\s*===", re.IGNORECASE)
+                    page_regex = re.compile(r"===\s*\[Trang\s+(\d+)/\d+\]\s+([^=\n\r]+)\s*===", re.IGNORECASE)
                     matches = list(page_regex.finditer(full_text))
                     if matches:
                         for idx, m in enumerate(matches):
@@ -536,15 +545,28 @@ class BookRepository:
                                 "text": p_text
                             })
                     else:
+                        has_img = bool(book.get("cover_image"))
                         pages.append({
                             "page_num": 1,
                             "filename": "full.txt",
-                            "has_image": bool(book.get("cover_image")),
-                            "image_url": f"/api/museum/artifacts/{slug}/page-image/1",
+                            "has_image": has_img,
+                            "image_url": f"/api/museum/artifacts/{slug}/page-image/1" if has_img else "",
                             "text": full_text
                         })
                 except Exception:
                     pass
+
+        # Final guarantee: never return an empty pages list
+        if not pages:
+            summary = book.get("summary") or "Hiện vật đã được lưu trữ trong danh mục di sản số."
+            has_img = bool(book.get("cover_image"))
+            pages.append({
+                "page_num": 1,
+                "filename": f"{slug}_p1.txt",
+                "has_image": has_img,
+                "image_url": f"/api/museum/artifacts/{slug}/page-image/1" if has_img else "",
+                "text": summary
+            })
 
         return {
             "artifact": book,

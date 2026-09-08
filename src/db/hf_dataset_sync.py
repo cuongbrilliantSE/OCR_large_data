@@ -169,7 +169,14 @@ class HFDatasetSync:
                     cover_image=cover_url,
                     summary=b.get("summary", ""),
                     is_public=b.get("is_public", 1),
-                    status=b.get("status", "COMPLETED")
+                    status=b.get("status", "COMPLETED"),
+                    artifact_code=b.get("artifact_code", ""),
+                    period_era=b.get("period_era", ""),
+                    provenance=b.get("provenance", ""),
+                    material_condition=b.get("material_condition", ""),
+                    curator_notes=b.get("curator_notes", ""),
+                    exhibition_hall=b.get("exhibition_hall", "Khu Trưng Bày Chung"),
+                    highlights_json=b.get("highlights_json", "[]")
                 )
                 restored += 1
 
@@ -205,4 +212,27 @@ class HFDatasetSync:
             return text_file
         except Exception as e:
             print(f"[HFDatasetSync] Could not download text file for {slug}: {e}")
+            return None
+
+    def ensure_book_cover(self, slug: str) -> Optional[Path]:
+        """Ensures data/covers/{slug}.jpg exists locally."""
+        cover_dest = self.covers_dir / f"{slug}.jpg"
+        if cover_dest.is_file() and cover_dest.stat().st_size > 0:
+            return cover_dest
+
+        if not self.is_configured():
+            return None
+
+        try:
+            downloaded = hf_hub_download(
+                repo_id=self.repo_id,
+                repo_type="dataset",
+                filename=f"{slug}/cover.jpg",
+                token=self.token
+            )
+            import shutil
+            self.covers_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy(downloaded, cover_dest)
+            return cover_dest
+        except Exception:
             return None

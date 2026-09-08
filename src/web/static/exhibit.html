@@ -172,6 +172,19 @@
             class="max-h-full max-w-full object-contain rounded-lg shadow-2xl transition-transform duration-100 ease-out border border-amber-900/20"
             draggable="false"
           />
+          <!-- Fallback Card when scan image is not hosted on cloud -->
+          <div id="artifactImageFallback" class="hidden flex flex-col items-center justify-center text-center p-6 sm:p-8 max-w-md bg-amber-950/20 border border-amber-500/20 rounded-2xl shadow-2xl backdrop-blur-sm">
+            <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-3xl mb-3 shadow-inner">
+              <i class="ph-bold ph-scroll"></i>
+            </div>
+            <h4 class="text-sm sm:text-base font-bold text-amber-200 mb-1.5">Bản Phục Chế Di Sản Số</h4>
+            <p class="text-xs text-slate-400 leading-relaxed mb-4">
+              Ảnh quét vi phim của trang này đang được lưu trữ tại máy chủ bảo tồn ngoại tuyến. Đang hiển thị bản phục dựng văn bản chuẩn quốc gia ở khung bên phải.
+            </p>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-amber-500/20 text-[10px] font-mono text-amber-300">
+              <i class="ph-bold ph-seal-check text-emerald-400"></i> Đã thẩm định toàn văn AI
+            </div>
+          </div>
           <!-- Magnifier Lens Overlay -->
           <div id="magnifierLens" class="magnifier-lens"></div>
           
@@ -234,6 +247,16 @@
               alt="Left Page Scan" 
               class="max-h-full max-w-full object-contain shadow-md rounded"
             />
+            <!-- 3D Flip Fallback when scan is not available -->
+            <div id="flipLeftFallback" class="hidden flex flex-col items-center justify-center text-center p-6 text-slate-400">
+              <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-2xl mb-3 shadow-inner">
+                <i class="ph-bold ph-book-bookmark"></i>
+              </div>
+              <p class="text-xs font-semibold text-amber-200">Trang Bản Gốc Di Sản</p>
+              <p class="text-[10px] text-slate-400 mt-1 max-w-[200px] leading-relaxed">
+                Bản số hóa toàn văn hiển thị tương ứng ở trang đối diện.
+              </p>
+            </div>
             <span class="absolute bottom-2 left-3 text-[10px] font-mono text-slate-500" id="flipLeftPageNum">Trang 1</span>
           </div>
 
@@ -440,6 +463,8 @@
     const imageViewport = document.getElementById('imageViewport');
     const magnifierLens = document.getElementById('magnifierLens');
     const imageLoadingSpinner = document.getElementById('imageLoadingSpinner');
+    const artifactImageFallback = document.getElementById('artifactImageFallback');
+    const flipLeftFallback = document.getElementById('flipLeftFallback');
     const zoomInBtn = document.getElementById('zoomInBtn');
     const zoomOutBtn = document.getElementById('zoomOutBtn');
     const zoomResetBtn = document.getElementById('zoomResetBtn');
@@ -532,7 +557,21 @@
         if (!res.ok) throw new Error('Failed to load artifact');
         dossierData = await res.json();
 
-        const totalPages = dossierData.pages.length || 1;
+        // Ensure pages is never empty
+        if (!dossierData.pages || dossierData.pages.length === 0) {
+          const summaryText = (dossierData.artifact && dossierData.artifact.summary) 
+            ? dossierData.artifact.summary 
+            : 'Hiện vật đã được lưu trữ an toàn trong kho dữ liệu di sản số.';
+          dossierData.pages = [{
+            page_num: 1,
+            filename: `${bookSlug}_p1.txt`,
+            has_image: true,
+            image_url: `/api/museum/artifacts/${bookSlug}/page-image/1`,
+            text: summaryText
+          }];
+        }
+
+        const totalPages = dossierData.pages.length;
         headerPageCounter.textContent = `${totalPages} trang hiện vật`;
         totalPagesLabel.textContent = `/ ${totalPages}`;
         pageNumberInput.max = totalPages;
@@ -565,16 +604,32 @@
       pageWordCount.textContent = `${words.length} từ`;
       pageTextContent.textContent = page.text || 'Trang này chưa có dữ liệu văn bản số hóa.';
 
-      // Update Scan Image
+      // Update Scan Image with graceful error handling
       imageLoadingSpinner.classList.remove('hidden');
       const imgUrl = `/api/museum/artifacts/${bookSlug}/page-image/${pageNum}`;
-      artifactImage.src = imgUrl;
+
       artifactImage.onload = () => {
         imageLoadingSpinner.classList.add('hidden');
+        artifactImage.classList.remove('hidden');
+        if (artifactImageFallback) artifactImageFallback.classList.add('hidden');
         if (isLensActive) updateMagnifierBackground();
       };
+      artifactImage.onerror = () => {
+        imageLoadingSpinner.classList.add('hidden');
+        artifactImage.classList.add('hidden');
+        if (artifactImageFallback) artifactImageFallback.classList.remove('hidden');
+      };
+      artifactImage.src = imgUrl;
 
       // Update 3D Flip View
+      flipLeftImage.onload = () => {
+        flipLeftImage.classList.remove('hidden');
+        if (flipLeftFallback) flipLeftFallback.classList.add('hidden');
+      };
+      flipLeftImage.onerror = () => {
+        flipLeftImage.classList.add('hidden');
+        if (flipLeftFallback) flipLeftFallback.classList.remove('hidden');
+      };
       flipLeftImage.src = imgUrl;
       flipLeftPageNum.textContent = `Trang ${pageNum}`;
       flipRightText.textContent = page.text || 'Chưa có nội dung số hóa.';

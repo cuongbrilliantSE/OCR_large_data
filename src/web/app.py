@@ -65,12 +65,12 @@ def extract_gdrive_id(url: str) -> Optional[str]:
 
 @app.on_event("startup")
 async def on_startup():
-    """Sync local books, seed museum metadata, and pull cloud library manifest on startup."""
+    """Sync local books, pull cloud manifest, and seed museum metadata on startup."""
     try:
         book_repo.sync_all_books()
-        book_repo.seed_museum_metadata()
         if dataset_syncer.is_configured():
             dataset_syncer.pull_manifest_and_restore(book_repo)
+        book_repo.seed_museum_metadata()
     except Exception as e:
         print(f"[App Startup] Sync error: {e}")
 
@@ -143,6 +143,10 @@ async def get_museum_exhibit(slug: str):
 
     if not book:
         raise HTTPException(status_code=404, detail=f"Không tìm thấy hiện vật di sản: {slug}")
+
+    # Ensure book text file is ready locally / on cloud
+    if dataset_syncer.is_configured():
+        dataset_syncer.ensure_book_text_file(slug, book["title"])
 
     html = EXHIBIT_HTML.read_text(encoding="utf-8")
     title = book.get("title", "")
@@ -239,6 +243,17 @@ async def api_museum_exhibits():
 @app.get("/api/museum/artifacts/{slug}")
 async def api_museum_artifact_dossier(slug: str):
     """Retrieve full artifact dossier with 1:1 original page scans and OCR text."""
+    book = book_repo.get_book_by_slug(slug)
+    if not book and dataset_syncer.is_configured():
+        dataset_syncer.pull_manifest_and_restore(book_repo)
+        book = book_repo.get_book_by_slug(slug)
+
+    if not book:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy hồ sơ hiện vật '{slug}'")
+
+    if dataset_syncer.is_configured():
+        dataset_syncer.ensure_book_text_file(slug, book["title"])
+
     dossier = book_repo.get_artifact_dossier(slug)
     if not dossier:
         raise HTTPException(status_code=404, detail=f"Không tìm thấy hồ sơ hiện vật '{slug}'")
@@ -248,6 +263,9 @@ async def api_museum_artifact_dossier(slug: str):
 @app.get("/api/museum/artifacts/{slug}/page-image/{page_num}")
 async def api_museum_page_image(slug: str, page_num: int):
     """Serve high-resolution original page scan (auto-converted to JPEG)."""
+    if page_num == 1 and dataset_syncer.is_configured():
+        dataset_syncer.ensure_book_cover(slug)
+
     img_path = book_repo.get_page_image_path(slug, page_num)
     if not img_path or not img_path.is_file():
         raise HTTPException(status_code=404, detail=f"Không tìm thấy ảnh gốc cho trang {page_num}")
