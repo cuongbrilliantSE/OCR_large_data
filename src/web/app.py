@@ -40,6 +40,8 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 INDEX_HTML = STATIC_DIR / "index.html"
 LIBRARY_HTML = STATIC_DIR / "library.html"
 READER_HTML = STATIC_DIR / "reader.html"
+MUSEUM_HTML = STATIC_DIR / "museum.html"
+EXHIBIT_HTML = STATIC_DIR / "exhibit.html"
 
 # Mount static covers directory
 COVERS_DIR = Path("data/covers")
@@ -63,9 +65,10 @@ def extract_gdrive_id(url: str) -> Optional[str]:
 
 @app.on_event("startup")
 async def on_startup():
-    """Sync local books and pull cloud library manifest on startup."""
+    """Sync local books, seed museum metadata, and pull cloud library manifest on startup."""
     try:
         book_repo.sync_all_books()
+        book_repo.seed_museum_metadata()
         if dataset_syncer.is_configured():
             dataset_syncer.pull_manifest_and_restore(book_repo)
     except Exception as e:
@@ -117,6 +120,39 @@ async def get_reader(slug: str):
     html = html.replace("{{WORD_COUNT}}", word_count)
     html = html.replace("{{BOOK_SLUG}}", slug)
     html = html.replace("{{BOOK_TITLE_URL}}", urllib.parse.quote(title))
+
+    return HTMLResponse(content=html)
+
+
+@app.api_route("/museum", methods=["GET", "HEAD"], response_class=HTMLResponse)
+async def get_museum():
+    if not MUSEUM_HTML.is_file():
+        raise HTTPException(status_code=404, detail="Giao diện Bảo Tàng Số không tồn tại")
+    return HTMLResponse(content=MUSEUM_HTML.read_text(encoding="utf-8"))
+
+
+@app.api_route("/museum/exhibit/{slug}", methods=["GET", "HEAD"], response_class=HTMLResponse)
+async def get_museum_exhibit(slug: str):
+    if not EXHIBIT_HTML.is_file():
+        raise HTTPException(status_code=404, detail="Giao diện Phòng Triển Lãm không tồn tại")
+
+    book = book_repo.get_book_by_slug(slug)
+    if not book and dataset_syncer.is_configured():
+        dataset_syncer.pull_manifest_and_restore(book_repo)
+        book = book_repo.get_book_by_slug(slug)
+
+    if not book:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy hiện vật di sản: {slug}")
+
+    html = EXHIBIT_HTML.read_text(encoding="utf-8")
+    title = book.get("title", "")
+    artifact_code = book.get("artifact_code") or f"BT-{slug[:6].upper()}"
+    period_era = book.get("period_era") or "Chưa rõ niên đại"
+
+    html = html.replace("{{BOOK_TITLE}}", title)
+    html = html.replace("{{ARTIFACT_CODE}}", artifact_code)
+    html = html.replace("{{PERIOD_ERA}}", period_era)
+    html = html.replace("{{BOOK_SLUG}}", slug)
 
     return HTMLResponse(content=html)
 
@@ -190,6 +226,106 @@ async def api_library_update_book(
         dataset_syncer.push_book_async(slug)
 
     return JSONResponse(updated)
+
+
+# ── Museum API Endpoints ─────────────────────────────────────────────────────
+
+@app.get("/api/museum/exhibits")
+async def api_museum_exhibits():
+    """Retrieve thematic exhibition halls and curated artifacts."""
+    return JSONResponse(book_repo.get_museum_exhibits())
+
+
+@app.get("/api/museum/artifacts/{slug}")
+async def api_museum_artifact_dossier(slug: str):
+    """Retrieve full artifact dossier with 1:1 original page scans and OCR text."""
+    dossier = book_repo.get_artifact_dossier(slug)
+    if not dossier:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy hồ sơ hiện vật '{slug}'")
+    return JSONResponse(dossier)
+
+
+@app.get("/api/museum/artifacts/{slug}/page-image/{page_num}")
+async def api_museum_page_image(slug: str, page_num: int):
+    """Serve high-resolution original page scan (auto-converted to JPEG)."""
+    img_path = book_repo.get_page_image_path(slug, page_num)
+    if not img_path or not img_path.is_file():
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy ảnh gốc cho trang {page_num}")
+    return FileResponse(
+        path=img_path,
+        media_type="image/jpeg",
+        headers={"Cache-Control": "public, max-age=86400"}
+    )
+
+
+@app.post("/api/museum/artifacts/{slug}/chat")
+async def api_museum_chat(
+    slug: str,
+    payload: dict = Body(...)
+):
+    """AI Museum Curator interactive Q&A grounded on artifact content."""
+    question = (payload.get("question") or "").strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Thiếu câu hỏi của khách tham quan.")
+
+    dossier = book_repo.get_artifact_dossier(slug)
+    if not dossier:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy hiện vật '{slug}'")
+
+    meta = dossier.get("artifact", {})
+    title = meta.get("title", "")
+    code = meta.get("artifact_code", "")
+    era = meta.get("period_era", "")
+    provenance = meta.get("provenance", "")
+    curator_notes = meta.get("curator_notes", "")
+    highlights = meta.get("highlights_json") or []
+
+    # Read partial book text for grounding
+    sample_text = ""
+    pages = dossier.get("pages", [])
+    if pages:
+        sample_pages = [p.get("text", "") for p in pages[:12] if p.get("text")]
+        sample_text = "\n\n--- Trích đoạn nội dung hiện vật ---\n\n" + "\n\n".join(sample_pages)[:6000]
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if api_key:
+        try:
+            from google import genai
+            client = genai.Client(api_key=api_key)
+            prompt = f"""Bạn là Giám tuyển Di sản (AI Museum Curator) của Bảo tàng Di sản số, đang thuyết minh và đối thoại chuyên sâu cùng khách tham quan về hiện vật quý:
+Tên hiện vật: {title}
+Mã lưu trữ: {code}
+Niên đại: {era}
+Nguồn gốc / Xuất xứ: {provenance}
+Ghi chú giám tuyển: {curator_notes}
+Điểm nhấn: {", ".join(highlights) if isinstance(highlights, list) else ""}
+
+{sample_text}
+
+Khách tham quan hỏi: "{question}"
+
+Yêu cầu trả lời:
+- Giọng văn trang trọng, uyên bác, trang nhã, đúng phong thái giám tuyển bảo tàng văn hóa - lịch sử Việt Nam.
+- Dẫn chứng chuẩn xác từ ghi chú giám tuyển và trích đoạn hiện vật.
+- Trả lời ngắn gọn, khúc chiết, súc tích (khoảng 2-4 đoạn văn).
+"""
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+            answer = (response.text or "").strip()
+            if answer:
+                return JSONResponse({"answer": answer})
+        except Exception as e:
+            print(f"[Museum Chat Error] {e}")
+
+    fallback_answer = (
+        f"Kính chào quý khách. Về hiện vật **{title}** ({code}, niên đại {era}), "
+        f"ghi chép giám tuyển ghi nhận: {curator_notes}. "
+        f"Hiện vật có nguồn gốc từ {provenance}. "
+        f"Quý khách có thể sử dụng chế độ 'So sánh đối chiếu' (Dual-View) phóng đại trang sách để trực tiếp quan sát văn bản nguyên tác."
+    )
+    return JSONResponse({"answer": fallback_answer})
 
 
 # ── OCR Pipeline API Endpoints ───────────────────────────────────────────────

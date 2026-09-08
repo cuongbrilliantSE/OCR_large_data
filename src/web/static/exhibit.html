@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>{{BOOK_TITLE}} — Triển Lãm Hiện Vật Di Sản Số</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            museum: {
+              gold: '#d4af37',
+              goldLight: '#f3e5ab',
+              bronze: '#8c6239',
+              dark: '#060a12',
+              surface: '#0b111e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* 3D Book Flip Animation Styles */
+    .book-stage {
+      perspective: 1800px;
+    }
+    .book-wrapper {
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .page-spread {
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 20px rgba(212, 175, 55, 0.1);
+    }
+    .spine-shadow {
+      background: linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 10%, rgba(0,0,0,0) 90%, rgba(0,0,0,0.4) 100%);
+    }
+
+    /* Magnifier Loupe */
+    .magnifier-lens {
+      position: absolute;
+      border: 2px solid #d4af37;
+      border-radius: 50%;
+      cursor: none;
+      width: 140px;
+      height: 140px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.6), inset 0 0 10px rgba(212,175,55,0.4);
+      pointer-events: none;
+      display: none;
+      z-index: 30;
+      background-repeat: no-repeat;
+    }
+
+    /* Text highlight */
+    mark.search-highlight {
+      background-color: #fef08a;
+      color: #1e293b;
+      padding: 0.1em 0.25em;
+      border-radius: 0.25rem;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased bg-[#050811] text-slate-100 overflow-hidden select-none">
+
+  <!-- Museum Top Navigation Bar -->
+  <header class="border-b border-amber-900/30 bg-[#080d1a]/95 backdrop-blur z-40 px-3 sm:px-6 shrink-0">
+    <div class="h-16 flex items-center justify-between gap-2">
+      
+      <!-- Left: Navigation & Artifact Badges -->
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <a href="/museum" class="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-400 border border-amber-900/40 transition flex items-center justify-center shrink-0" title="Trở về Sảnh Bảo Tàng">
+          <i class="ph-bold ph-arrow-left text-lg"></i>
+        </a>
+
+        <div class="min-w-0 truncate">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+              {{ARTIFACT_CODE}}
+            </span>
+            <h1 class="text-xs sm:text-base font-black text-white truncate max-w-[150px] xs:max-w-[220px] sm:max-w-xs md:max-w-md">
+              {{BOOK_TITLE}}
+            </h1>
+          </div>
+          <p class="text-[10px] sm:text-[11px] text-amber-200/60 truncate flex items-center gap-1.5 mt-0.5">
+            <span>{{PERIOD_ERA}}</span>
+            <span>•</span>
+            <span id="headerPageCounter">Đang tải trang...</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: Exhibition Modes & Curator Actions -->
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        
+        <!-- View Mode Switcher -->
+        <div class="flex items-center bg-slate-900/90 border border-amber-900/40 rounded-xl p-1 text-xs">
+          <button id="modeDualBtn" class="px-2.5 sm:px-3 py-1 rounded-lg font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 transition flex items-center gap-1">
+            <i class="ph-bold ph-columns"></i>
+            <span class="hidden sm:inline">Song Đôi</span>
+          </button>
+          <button id="modeFlipBtn" class="px-2.5 sm:px-3 py-1 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center gap-1">
+            <i class="ph-bold ph-book-open"></i>
+            <span class="hidden sm:inline">Lật Sách 3D</span>
+          </button>
+        </div>
+
+        <!-- Audio Guide Button -->
+        <button id="playAudioBtn" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 border border-amber-900/40 text-xs font-semibold flex items-center gap-1.5 transition" title="Nghe thuyết minh di sản">
+          <i class="ph-bold ph-headphones text-base sm:text-sm"></i>
+          <span class="hidden md:inline">Audio Guide</span>
+        </button>
+
+        <!-- Chat with Artifact AI Button -->
+        <button id="openChatBtn" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-md shadow-amber-600/20 transition" title="Đặt câu hỏi cho hiện vật">
+          <i class="ph-bold ph-chat-circle-dots text-base sm:text-sm"></i>
+          <span class="hidden md:inline">Hỏi Đáp AI</span>
+        </button>
+
+        <!-- Curator Dossier Button -->
+        <button id="openDossierBtn" class="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-medium transition" title="Hồ sơ giám định hiện vật">
+          <i class="ph-bold ph-certificate text-base sm:text-sm text-amber-400"></i>
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Exhibition Content Workspace -->
+  <div class="flex-1 flex flex-col overflow-hidden relative">
+
+    <!-- ── Mode 1: Dual-View Showcase (Original Scan + OCR Text) ─────────────── -->
+    <div id="dualViewSection" class="flex-1 flex flex-col md:flex-row overflow-hidden">
+      
+      <!-- Left Pane: High-Resolution Original Scan Image -->
+      <div class="w-full md:w-1/2 h-1/2 md:h-full bg-slate-950/80 border-b md:border-b-0 md:border-r border-amber-900/30 flex flex-col relative overflow-hidden">
+        <!-- Scan Image Toolbar -->
+        <div class="h-10 px-3 border-b border-amber-900/20 bg-[#070b14] flex items-center justify-between text-xs shrink-0 z-20">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-amber-400/90 flex items-center gap-1 font-bold">
+              <i class="ph-bold ph-camera"></i> Hiện vật gốc
+            </span>
+            <span id="currentImageFileName" class="text-[10px] text-slate-500 font-mono truncate max-w-[120px] sm:max-w-[180px]">---</span>
+          </div>
+
+          <!-- Image Controls: Zoom In, Out, Reset, Lens Magnifier -->
+          <div class="flex items-center gap-1 text-slate-400">
+            <button id="zoomInBtn" class="p-1 hover:text-amber-300 transition" title="Phóng to ảnh"><i class="ph-bold ph-magnifying-glass-plus"></i></button>
+            <button id="zoomOutBtn" class="p-1 hover:text-amber-300 transition" title="Thu nhỏ ảnh"><i class="ph-bold ph-magnifying-glass-minus"></i></button>
+            <button id="zoomResetBtn" class="p-1 hover:text-amber-300 transition" title="Đặt lại kích thước"><i class="ph-bold ph-arrows-clockwise"></i></button>
+            <span class="text-slate-700">|</span>
+            <button id="toggleLensBtn" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1" title="Bật kính lúp soi chi tiết">
+              <i class="ph-bold ph-crosshair"></i> Kính lúp
+            </button>
+          </div>
+        </div>
+
+        <!-- Image Container with Drag & Zoom -->
+        <div id="imageViewport" class="flex-1 overflow-hidden relative flex items-center justify-center p-3 cursor-grab active:cursor-grabbing select-none">
+          <img 
+            id="artifactImage" 
+            src="" 
+            alt="Original Artifact Scan" 
+            class="max-h-full max-w-full object-contain rounded-lg shadow-2xl transition-transform duration-100 ease-out border border-amber-900/20"
+            draggable="false"
+          />
+          <!-- Magnifier Lens Overlay -->
+          <div id="magnifierLens" class="magnifier-lens"></div>
+          
+          <!-- Image Loading State -->
+          <div id="imageLoadingSpinner" class="absolute inset-0 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs hidden">
+            <i class="ph-bold ph-spinner animate-spin text-3xl text-amber-400"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Pane: Clean Digitized Transcript -->
+      <div class="w-full md:w-1/2 h-1/2 md:h-full bg-[#080d19] flex flex-col relative overflow-hidden select-text">
+        <!-- Text Toolbar -->
+        <div class="h-10 px-3 border-b border-amber-900/20 bg-[#070b14] flex items-center justify-between text-xs shrink-0 select-none">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-1">
+              <i class="ph-bold ph-text-aa"></i> Văn bản số hóa
+            </span>
+            <span id="pageWordCount" class="text-[10px] text-slate-500 font-mono">0 từ</span>
+          </div>
+
+          <!-- Font Size Adjust & Copy -->
+          <div class="flex items-center gap-1.5 text-slate-400">
+            <button id="fontDecBtn" class="px-1.5 py-0.5 rounded text-[11px] hover:text-white font-bold transition">A-</button>
+            <button id="fontIncBtn" class="px-1.5 py-0.5 rounded text-[11px] hover:text-white font-bold transition">A+</button>
+            <span class="text-slate-700">|</span>
+            <button id="copyPageTextBtn" class="p-1 hover:text-amber-300 transition" title="Sao chép văn bản trang này">
+              <i class="ph-bold ph-copy"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Page Text Scrollable Content -->
+        <div id="textScrollArea" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-amber-900/20 text-xs font-mono text-amber-400">
+            <span id="transcriptHeaderBadge" class="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 font-bold">
+              Trang 1
+            </span>
+            <span class="text-[11px] text-slate-500">Giám định phục chế bằng AI</span>
+          </div>
+          <div id="pageTextContent" class="text-sm sm:text-base leading-relaxed text-slate-200 font-sans whitespace-pre-wrap">
+            Đang tải dữ liệu trang...
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Mode 2: 3D Virtual Book Flip Showcase ────────────────────────────── -->
+    <div id="flipViewSection" class="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative hidden bg-radial from-[#0d162b] to-[#040711]">
+      <div class="book-stage w-full max-w-4xl h-[480px] sm:h-[560px] flex items-center justify-center">
+        <!-- Dual Page 3D Spread Container -->
+        <div id="bookSpread" class="book-wrapper page-spread w-full h-full bg-[#0a0f1d] rounded-2xl border-2 border-amber-900/40 flex overflow-hidden relative">
+          
+          <!-- Left Page: Image Scan of (Current Page) -->
+          <div class="w-1/2 h-full bg-[#070b14] border-r border-amber-900/30 flex items-center justify-center p-4 relative overflow-hidden">
+            <img 
+              id="flipLeftImage" 
+              src="" 
+              alt="Left Page Scan" 
+              class="max-h-full max-w-full object-contain shadow-md rounded"
+            />
+            <span class="absolute bottom-2 left-3 text-[10px] font-mono text-slate-500" id="flipLeftPageNum">Trang 1</span>
+          </div>
+
+          <!-- Spine Center Shadow -->
+          <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-12 spine-shadow pointer-events-none z-10"></div>
+
+          <!-- Right Page: OCR Transcript -->
+          <div class="w-1/2 h-full bg-[#0d1424] flex flex-col p-5 sm:p-8 overflow-y-auto relative text-slate-200 select-text">
+            <div class="pb-2 border-b border-amber-900/20 text-xs font-mono text-amber-300 font-bold flex justify-between">
+              <span id="flipRightBadge">Văn bản số hóa</span>
+              <span id="flipRightPageNum" class="text-slate-500 font-normal">Trang 1</span>
+            </div>
+            <div id="flipRightText" class="mt-3 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+              Đang nạp dữ liệu lật sách...
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 3D Book Controls -->
+      <div class="mt-4 flex items-center gap-4 z-20">
+        <button id="prevFlipBtn" class="px-4 py-2 rounded-xl bg-slate-900 border border-amber-900/40 hover:bg-slate-800 text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition">
+          <i class="ph-bold ph-caret-left"></i> Lật trang trước
+        </button>
+        <span id="flipPageIndicator" class="text-xs font-mono text-slate-400">Trang 1 / --</span>
+        <button id="nextFlipBtn" class="px-4 py-2 rounded-xl bg-slate-900 border border-amber-900/40 hover:bg-slate-800 text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition">
+          Lật trang sau <i class="ph-bold ph-caret-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Global Bottom Navigation & Thumbnails Strip ───────────────────────── -->
+    <div class="h-20 bg-[#060a14] border-t border-amber-900/30 flex flex-col justify-between px-3 py-1.5 shrink-0 z-30 select-none">
+      <!-- Navigator Row -->
+      <div class="flex items-center justify-between text-xs">
+        <div class="flex items-center gap-1">
+          <button id="firstPageBtn" class="p-1 text-slate-400 hover:text-amber-300" title="Trang đầu"><i class="ph-bold ph-caret-double-left text-sm"></i></button>
+          <button id="prevPageBtn" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center gap-1">
+            <i class="ph-bold ph-caret-left"></i> Trước
+          </button>
+        </div>
+
+        <!-- Jump to page input -->
+        <div class="flex items-center gap-1.5 text-xs font-mono">
+          <span class="text-slate-400">Trang</span>
+          <input type="number" id="pageNumberInput" value="1" min="1" class="w-12 py-0.5 text-center bg-slate-900 border border-slate-700 rounded text-amber-300 font-bold focus:outline-none focus:border-amber-500">
+          <span class="text-slate-400" id="totalPagesLabel">/ --</span>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button id="nextPageBtn" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center gap-1">
+            Sau <i class="ph-bold ph-caret-right"></i>
+          </button>
+          <button id="lastPageBtn" class="p-1 text-slate-400 hover:text-amber-300" title="Trang cuối"><i class="ph-bold ph-caret-double-right text-sm"></i></button>
+        </div>
+      </div>
+
+      <!-- Quick Thumbnail Slider Bar -->
+      <div id="thumbStrip" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-1 h-10">
+        <!-- Thumb items populated via JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Curator Dossier & Citation Modal ────────────────────────────────────── -->
+  <div id="dossierModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div id="dossierBackdrop" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+    <div class="relative bg-slate-900 border border-amber-500/40 rounded-3xl p-6 max-w-xl w-full shadow-2xl z-10 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="ph-bold ph-certificate text-amber-400 text-2xl"></i>
+          <div>
+            <h3 class="text-base font-bold text-white">Hồ Sơ Giám Tuyển Hiện Vật Di Sản</h3>
+            <p class="text-[10px] text-amber-300/80">Museum Artifact Provenance & Citation</p>
+          </div>
+        </div>
+        <button id="closeDossierBtn" class="text-slate-400 hover:text-white text-xl p-1">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+          <span class="text-slate-400 block text-[10px]">Mã Định Danh Hiện Vật:</span>
+          <span id="dosCode" class="font-mono font-bold text-amber-300">---</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+          <span class="text-slate-400 block text-[10px]">Niên Đại / Thời Kỳ:</span>
+          <span id="dosEra" class="font-semibold text-white">---</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 col-span-2">
+          <span class="text-slate-400 block text-[10px]">Nguồn Gốc / Kho Tư Liệu:</span>
+          <span id="dosProvenance" class="text-slate-200">---</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 col-span-2">
+          <span class="text-slate-400 block text-[10px]">Chất Liệu & Tình Trạng Bảo Tồn Số:</span>
+          <span id="dosMaterial" class="text-slate-200">---</span>
+        </div>
+      </div>
+
+      <!-- Curator Notes -->
+      <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 leading-relaxed italic">
+        <span class="font-bold not-italic block mb-1">📜 Lời Bình Giám Tuyển:</span>
+        <p id="dosNotes">---</p>
+      </div>
+
+      <!-- Academic Citations Generator -->
+      <div class="space-y-2 pt-2 border-t border-slate-800">
+        <span class="text-xs font-bold text-slate-300 flex items-center gap-1">
+          <i class="ph-bold ph-quotes text-amber-400"></i> Trích Dẫn Khoa Học (Academic Citation):
+        </span>
+        <div class="flex items-center gap-2 text-xs">
+          <button id="citeApaBtn" class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">APA</button>
+          <button id="citeBibBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white">BibTeX</button>
+          <button id="citeTcvnBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white">TCVN</button>
+        </div>
+        <textarea id="citationOutput" readonly class="w-full h-20 p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 focus:outline-none resize-none"></textarea>
+        <button id="copyCitationBtn" class="w-full py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-semibold text-xs transition flex items-center justify-center gap-1.5">
+          <i class="ph-bold ph-copy"></i> Sao chép trích dẫn
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Chat With Artifact AI Drawer ──────────────────────────────────────── -->
+  <div id="chatDrawer" class="fixed inset-y-0 right-0 max-w-md w-full bg-slate-950 border-l border-amber-900/40 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- Chat Header -->
+    <div class="h-16 px-4 border-b border-amber-900/30 bg-[#070b14] flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-600 to-yellow-400 flex items-center justify-center text-slate-950 font-black">
+          <i class="ph-bold ph-sparkle"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Đối Thoại Cùng Hiện Vật</h3>
+          <p class="text-[10px] text-amber-300/80">AI Curator Q&A Assistant</p>
+        </div>
+      </div>
+      <button id="closeChatBtn" class="text-slate-400 hover:text-white text-lg p-1">
+        <i class="ph-bold ph-x"></i>
+      </button>
+    </div>
+
+    <!-- Chat Messages Box -->
+    <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-3 text-xs leading-relaxed">
+      <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200">
+        Xin chào! Tôi là Thuyết minh viên Bảo Tàng Số. Tôi đã nắm toàn bộ tư liệu của cuốn sách này. Bạn có thể hỏi tôi bất kỳ chi tiết lịch sử, nhân vật, phong tục hay đoạn trích nào!
+      </div>
+    </div>
+
+    <!-- Suggested Questions Chips -->
+    <div class="p-2 border-t border-slate-900 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px]">
+      <button class="chat-prompt-chip px-2.5 py-1 rounded-full bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-900/40 shrink-0">
+        Tóm tắt hiện vật này?
+      </button>
+      <button class="chat-prompt-chip px-2.5 py-1 rounded-full bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-900/40 shrink-0">
+        Nhân vật nổi bật nhất?
+      </button>
+      <button class="chat-prompt-chip px-2.5 py-1 rounded-full bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-900/40 shrink-0">
+        Giá trị lịch sử là gì?
+      </button>
+    </div>
+
+    <!-- Chat Input Area -->
+    <form id="chatForm" class="p-3 border-t border-amber-900/30 bg-[#080d1a] flex gap-2">
+      <input 
+        type="text" 
+        id="chatInput" 
+        placeholder="Đặt câu hỏi về cuốn sách này..." 
+        required
+        class="flex-1 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+      >
+      <button type="submit" id="chatSendBtn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-600 text-slate-950 font-bold text-xs flex items-center justify-center">
+        <i class="ph-bold ph-paper-plane-tilt"></i>
+      </button>
+    </form>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-24 right-6 z-50 transform translate-y-12 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 border border-amber-500/40 text-white text-xs shadow-xl">
+    <i class="ph-bold ph-check-circle text-amber-400 text-lg"></i>
+    <span id="toastMsg">Thành công!</span>
+  </div>
+
+  <script>
+    const bookSlug = "{{BOOK_SLUG}}";
+    let dossierData = null;
+    let currentPageIndex = 0;
+    let currentZoom = 1;
+    let isLensActive = false;
+    let isPlayingAudio = false;
+
+    // Elements
+    const headerPageCounter = document.getElementById('headerPageCounter');
+    const modeDualBtn = document.getElementById('modeDualBtn');
+    const modeFlipBtn = document.getElementById('modeFlipBtn');
+    const dualViewSection = document.getElementById('dualViewSection');
+    const flipViewSection = document.getElementById('flipViewSection');
+
+    // Dual View Elements
+    const artifactImage = document.getElementById('artifactImage');
+    const currentImageFileName = document.getElementById('currentImageFileName');
+    const imageViewport = document.getElementById('imageViewport');
+    const magnifierLens = document.getElementById('magnifierLens');
+    const imageLoadingSpinner = document.getElementById('imageLoadingSpinner');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+    const toggleLensBtn = document.getElementById('toggleLensBtn');
+
+    const transcriptHeaderBadge = document.getElementById('transcriptHeaderBadge');
+    const pageWordCount = document.getElementById('pageWordCount');
+    const pageTextContent = document.getElementById('pageTextContent');
+    const copyPageTextBtn = document.getElementById('copyPageTextBtn');
+    const fontIncBtn = document.getElementById('fontIncBtn');
+    const fontDecBtn = document.getElementById('fontDecBtn');
+
+    // Flip View Elements
+    const flipLeftImage = document.getElementById('flipLeftImage');
+    const flipLeftPageNum = document.getElementById('flipLeftPageNum');
+    const flipRightText = document.getElementById('flipRightText');
+    const flipRightPageNum = document.getElementById('flipRightPageNum');
+    const flipPageIndicator = document.getElementById('flipPageIndicator');
+    const prevFlipBtn = document.getElementById('prevFlipBtn');
+    const nextFlipBtn = document.getElementById('nextFlipBtn');
+
+    // Navigator Elements
+    const firstPageBtn = document.getElementById('firstPageBtn');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const lastPageBtn = document.getElementById('lastPageBtn');
+    const pageNumberInput = document.getElementById('pageNumberInput');
+    const totalPagesLabel = document.getElementById('totalPagesLabel');
+    const thumbStrip = document.getElementById('thumbStrip');
+
+    // Dossier Modal
+    const dossierModal = document.getElementById('dossierModal');
+    const dossierBackdrop = document.getElementById('dossierBackdrop');
+    const openDossierBtn = document.getElementById('openDossierBtn');
+    const closeDossierBtn = document.getElementById('closeDossierBtn');
+    const dosCode = document.getElementById('dosCode');
+    const dosEra = document.getElementById('dosEra');
+    const dosProvenance = document.getElementById('dosProvenance');
+    const dosMaterial = document.getElementById('dosMaterial');
+    const dosNotes = document.getElementById('dosNotes');
+    const citationOutput = document.getElementById('citationOutput');
+    const copyCitationBtn = document.getElementById('copyCitationBtn');
+    const citeApaBtn = document.getElementById('citeApaBtn');
+    const citeBibBtn = document.getElementById('citeBibBtn');
+    const citeTcvnBtn = document.getElementById('citeTcvnBtn');
+
+    // Chat AI Drawer
+    const chatDrawer = document.getElementById('chatDrawer');
+    const openChatBtn = document.getElementById('openChatBtn');
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatMessages = document.getElementById('chatMessages');
+
+    // Audio Guide
+    const playAudioBtn = document.getElementById('playAudioBtn');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    function showToast(msg) {
+      toastMsg.textContent = msg;
+      toast.classList.remove('translate-y-12', 'opacity-0');
+      setTimeout(() => toast.classList.add('translate-y-12', 'opacity-0'), 2500);
+    }
+
+    // Play Page Turning Paper Sound via Web Audio API (Synthesized)
+    function playPageTurnSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = audioCtx.sampleRate * 0.12;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.03));
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1000;
+        noise.connect(filter);
+        filter.connect(audioCtx.destination);
+        noise.start();
+      } catch (e) {}
+    }
+
+    async function loadArtifactDossier() {
+      try {
+        const res = await fetch(`/api/museum/artifacts/${bookSlug}`);
+        if (!res.ok) throw new Error('Failed to load artifact');
+        dossierData = await res.json();
+
+        const totalPages = dossierData.pages.length || 1;
+        headerPageCounter.textContent = `${totalPages} trang hiện vật`;
+        totalPagesLabel.textContent = `/ ${totalPages}`;
+        pageNumberInput.max = totalPages;
+
+        renderThumbStrip();
+        renderCurrentPage(0);
+        setupDossierModal();
+      } catch (err) {
+        console.error('Error loading artifact dossier:', err);
+        showToast('Lỗi tải dữ liệu hiện vật');
+      }
+    }
+
+    function renderCurrentPage(pageIdx) {
+      if (!dossierData || !dossierData.pages || dossierData.pages.length === 0) return;
+      if (pageIdx < 0) pageIdx = 0;
+      if (pageIdx >= dossierData.pages.length) pageIdx = dossierData.pages.length - 1;
+
+      currentPageIndex = pageIdx;
+      const page = dossierData.pages[currentPageIndex];
+      const pageNum = page.page_num;
+
+      // Update Nav input
+      pageNumberInput.value = pageNum;
+      transcriptHeaderBadge.textContent = `Trang ${pageNum} / ${dossierData.pages.length}`;
+      currentImageFileName.textContent = page.filename || `page_${pageNum}`;
+
+      // Calculate words
+      const words = (page.text || '').trim().split(/\s+/).filter(Boolean);
+      pageWordCount.textContent = `${words.length} từ`;
+      pageTextContent.textContent = page.text || 'Trang này chưa có dữ liệu văn bản số hóa.';
+
+      // Update Scan Image
+      imageLoadingSpinner.classList.remove('hidden');
+      const imgUrl = `/api/museum/artifacts/${bookSlug}/page-image/${pageNum}`;
+      artifactImage.src = imgUrl;
+      artifactImage.onload = () => {
+        imageLoadingSpinner.classList.add('hidden');
+        if (isLensActive) updateMagnifierBackground();
+      };
+
+      // Update 3D Flip View
+      flipLeftImage.src = imgUrl;
+      flipLeftPageNum.textContent = `Trang ${pageNum}`;
+      flipRightText.textContent = page.text || 'Chưa có nội dung số hóa.';
+      flipRightPageNum.textContent = `Trang ${pageNum}`;
+      flipPageIndicator.textContent = `Trang ${pageNum} / ${dossierData.pages.length}`;
+
+      // Update active thumbnail
+      document.querySelectorAll('.thumb-item').forEach((el, idx) => {
+        if (idx === currentPageIndex) {
+          el.className = 'thumb-item px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50 font-bold text-[11px] shrink-0';
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          el.className = 'thumb-item px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 text-[11px] font-mono shrink-0';
+        }
+      });
+
+      // Reset zoom
+      resetZoom();
+      playPageTurnSound();
+    }
+
+    function renderThumbStrip() {
+      thumbStrip.innerHTML = dossierData.pages.map((p, idx) => `
+        <button class="thumb-item px-2.5 py-1 rounded bg-slate-900 text-slate-400 text-[11px] font-mono shrink-0 transition" onclick="renderCurrentPage(${idx})">
+          ${p.page_num}
+        </button>
+      `).join('');
+    }
+
+    // Zoom and Pan Controls
+    function setZoom(val) {
+      currentZoom = Math.min(Math.max(val, 0.5), 3.0);
+      artifactImage.style.transform = `scale(${currentZoom})`;
+    }
+    function resetZoom() {
+      currentZoom = 1;
+      artifactImage.style.transform = 'scale(1)';
+    }
+
+    zoomInBtn.addEventListener('click', () => setZoom(currentZoom + 0.3));
+    zoomOutBtn.addEventListener('click', () => setZoom(currentZoom - 0.3));
+    zoomResetBtn.addEventListener('click', resetZoom);
+
+    // Kính Lúp (Magnifier Lens)
+    toggleLensBtn.addEventListener('click', () => {
+      isLensActive = !isLensActive;
+      if (isLensActive) {
+        toggleLensBtn.className = 'px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 transition flex items-center gap-1';
+        updateMagnifierBackground();
+      } else {
+        toggleLensBtn.className = 'px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1';
+        magnifierLens.style.display = 'none';
+      }
+    });
+
+    function updateMagnifierBackground() {
+      magnifierLens.style.backgroundImage = `url('${artifactImage.src}')`;
+      magnifierLens.style.backgroundSize = `${artifactImage.width * 2.5}px ${artifactImage.height * 2.5}px`;
+    }
+
+    imageViewport.addEventListener('mousemove', (e) => {
+      if (!isLensActive) return;
+      const rect = artifactImage.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+        magnifierLens.style.display = 'none';
+        return;
+      }
+
+      magnifierLens.style.display = 'block';
+      const lensWidth = magnifierLens.offsetWidth;
+      const lensHeight = magnifierLens.offsetHeight;
+      magnifierLens.style.left = `${e.clientX - imageViewport.getBoundingClientRect().left - lensWidth / 2}px`;
+      magnifierLens.style.top = `${e.clientY - imageViewport.getBoundingClientRect().top - lensHeight / 2}px`;
+      magnifierLens.style.backgroundPosition = `-${x * 2.5 - lensWidth / 2}px -${y * 2.5 - lensHeight / 2}px`;
+    });
+
+    // Navigation Listeners
+    firstPageBtn.addEventListener('click', () => renderCurrentPage(0));
+    prevPageBtn.addEventListener('click', () => renderCurrentPage(currentPageIndex - 1));
+    nextPageBtn.addEventListener('click', () => renderCurrentPage(currentPageIndex + 1));
+    lastPageBtn.addEventListener('click', () => renderCurrentPage(dossierData.pages.length - 1));
+
+    prevFlipBtn.addEventListener('click', () => renderCurrentPage(currentPageIndex - 1));
+    nextFlipBtn.addEventListener('click', () => renderCurrentPage(currentPageIndex + 1));
+
+    pageNumberInput.addEventListener('change', (e) => {
+      const val = parseInt(e.target.value);
+      if (!isNaN(val)) renderCurrentPage(val - 1);
+    });
+
+    // Mode Switcher (Dual View vs 3D Flip)
+    modeDualBtn.addEventListener('click', () => {
+      modeDualBtn.className = 'px-2.5 sm:px-3 py-1 rounded-lg font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 transition flex items-center gap-1';
+      modeFlipBtn.className = 'px-2.5 sm:px-3 py-1 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center gap-1';
+      dualViewSection.classList.remove('hidden');
+      flipViewSection.classList.add('hidden');
+    });
+
+    modeFlipBtn.addEventListener('click', () => {
+      modeFlipBtn.className = 'px-2.5 sm:px-3 py-1 rounded-lg font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 transition flex items-center gap-1';
+      modeDualBtn.className = 'px-2.5 sm:px-3 py-1 rounded-lg font-medium text-slate-400 hover:text-white transition flex items-center gap-1';
+      dualViewSection.classList.add('hidden');
+      flipViewSection.classList.remove('hidden');
+    });
+
+    // Font Sizing
+    let currentFontSize = 15;
+    fontIncBtn.addEventListener('click', () => {
+      if (currentFontSize < 26) {
+        currentFontSize += 2;
+        pageTextContent.style.fontSize = `${currentFontSize}px`;
+      }
+    });
+    fontDecBtn.addEventListener('click', () => {
+      if (currentFontSize > 12) {
+        currentFontSize -= 2;
+        pageTextContent.style.fontSize = `${currentFontSize}px`;
+      }
+    });
+
+    copyPageTextBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(pageTextContent.textContent).then(() => showToast('Đã sao chép văn bản trang!'));
+    });
+
+    // Dossier Modal
+    function setupDossierModal() {
+      if (!dossierData || !dossierData.curator_dossier) return;
+      const d = dossierData.curator_dossier;
+      dosCode.textContent = d.artifact_code;
+      dosEra.textContent = d.period_era;
+      dosProvenance.textContent = d.provenance;
+      dosMaterial.textContent = d.material_condition;
+      dosNotes.textContent = d.curator_notes;
+      citationOutput.value = d.citations.apa;
+    }
+
+    openDossierBtn.addEventListener('click', () => dossierModal.classList.remove('hidden'));
+    closeDossierBtn.addEventListener('click', () => dossierModal.classList.add('hidden'));
+    dossierBackdrop.addEventListener('click', () => dossierModal.classList.add('hidden'));
+
+    citeApaBtn.addEventListener('click', () => {
+      citationOutput.value = dossierData.curator_dossier.citations.apa;
+      setCiteBtnActive(citeApaBtn);
+    });
+    citeBibBtn.addEventListener('click', () => {
+      citationOutput.value = dossierData.curator_dossier.citations.bibtex;
+      setCiteBtnActive(citeBibBtn);
+    });
+    citeTcvnBtn.addEventListener('click', () => {
+      citationOutput.value = dossierData.curator_dossier.citations.tcvn;
+      setCiteBtnActive(citeTcvnBtn);
+    });
+
+    function setCiteBtnActive(btn) {
+      [citeApaBtn, citeBibBtn, citeTcvnBtn].forEach(b => {
+        b.className = (b === btn) 
+          ? 'px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold'
+          : 'px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white';
+      });
+    }
+
+    copyCitationBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(citationOutput.value).then(() => showToast('Đã sao chép trích dẫn khoa học!'));
+    });
+
+    // AI Audio Guide (Speech Synthesis)
+    playAudioBtn.addEventListener('click', () => {
+      if (!('speechSynthesis' in window)) {
+        showToast('Trình duyệt không hỗ trợ Audio Guide.');
+        return;
+      }
+
+      if (isPlayingAudio) {
+        window.speechSynthesis.cancel();
+        isPlayingAudio = false;
+        playAudioBtn.innerHTML = '<i class="ph-bold ph-headphones text-sm"></i> <span class="hidden md:inline">Audio Guide</span>';
+        return;
+      }
+
+      const curPage = dossierData.pages[currentPageIndex];
+      const speech = new SpeechSynthesisUtterance(
+        `Thuyết minh trang ${curPage.page_num}: ${curPage.text || 'Trang không có chữ.'}`
+      );
+      speech.lang = 'vi-VN';
+      speech.rate = 0.95;
+      speech.onend = () => {
+        isPlayingAudio = false;
+        playAudioBtn.innerHTML = '<i class="ph-bold ph-headphones text-sm"></i> <span class="hidden md:inline">Audio Guide</span>';
+      };
+
+      window.speechSynthesis.speak(speech);
+      isPlayingAudio = true;
+      playAudioBtn.innerHTML = '<i class="ph-bold ph-pause text-sm"></i> <span class="hidden md:inline">Dừng Audio</span>';
+    });
+
+    // Chat With Artifact AI Drawer
+    openChatBtn.addEventListener('click', () => chatDrawer.classList.remove('translate-x-full'));
+    closeChatBtn.addEventListener('click', () => chatDrawer.classList.add('translate-x-full'));
+
+    document.querySelectorAll('.chat-prompt-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        chatInput.value = chip.textContent.trim();
+        chatForm.dispatchEvent(new Event('submit'));
+      });
+    });
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = chatInput.value.trim();
+      if (!q) return;
+
+      appendChatMessage('user', q);
+      chatInput.value = '';
+
+      const loadingMsg = appendChatMessage('ai', 'Đang tra cứu hiện vật và trả lời...');
+
+      try {
+        const res = await fetch(`/api/museum/artifacts/${bookSlug}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q })
+        });
+        const data = await res.json();
+        loadingMsg.innerHTML = escapeHtml(data.answer || 'Không thể trả lời câu hỏi này.');
+      } catch (err) {
+        loadingMsg.textContent = 'Lỗi kết nối tới trợ lý giám tuyển AI.';
+      }
+    });
+
+    function appendChatMessage(sender, text) {
+      const msg = document.createElement('div');
+      if (sender === 'user') {
+        msg.className = 'p-3 rounded-2xl bg-amber-600/30 border border-amber-500/40 text-white ml-6';
+      } else {
+        msg.className = 'p-3 rounded-2xl bg-slate-900 border border-slate-800 text-amber-200/90 mr-6';
+      }
+      msg.textContent = text;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return msg;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Initialize
+    loadArtifactDossier();
+  </script>
+</body>
+</html>

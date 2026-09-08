@@ -37,3 +37,5 @@ logs/*
 # Cache & local tools
 .freebuff/
 .cache/
+data/page_cache/
+data/covers/

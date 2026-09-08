@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Bảo Tàng Số Di Sản Sách — Book OCR Heritage Museum</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            museum: {
+              gold: '#d4af37',
+              goldLight: '#f3e5ab',
+              bronze: '#8c6239',
+              dark: '#070b14',
+              surface: '#0d1322',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Museum Ambient Glow */
+    .spotlight {
+      background: radial-gradient(circle at 50% -20%, rgba(212, 175, 55, 0.15), transparent 70%);
+    }
+    .spotlight-card {
+      background: radial-gradient(circle at top left, rgba(212, 175, 55, 0.08), transparent 60%);
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased bg-gradient-to-br from-slate-950 via-[#070c18] to-[#040814] text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
+
+  <!-- Header / Navigation Bar -->
+  <header class="border-b border-amber-900/30 bg-slate-950/85 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+      <!-- Logo & Title -->
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-300 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0">
+          <i class="ph-bold ph-bank text-slate-950 text-xl sm:text-2xl"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-black bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 bg-clip-text text-transparent truncate">
+              Bảo Tàng Số Di Sản Sách
+            </h1>
+            <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 tracking-wider uppercase">
+              Digital Heritage
+            </span>
+          </div>
+          <p class="text-[11px] text-amber-200/60 truncate hidden sm:block">Không gian phục dựng, trưng bày & đối thoại cùng hiện vật</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1 sm:gap-2 shrink-0">
+        <a href="/" class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center gap-1 sm:gap-1.5">
+          <i class="ph-bold ph-lightning"></i>
+          <span class="hidden sm:inline">OCR Studio</span>
+        </a>
+        <a href="/library" class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center gap-1 sm:gap-1.5">
+          <i class="ph-bold ph-books"></i>
+          <span>Thư Viện</span>
+        </a>
+        <a href="/museum" class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 transition flex items-center gap-1 sm:gap-1.5 shadow-sm shadow-amber-500/10">
+          <i class="ph-bold ph-bank"></i>
+          <span>Bảo Tàng Số</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Museum Grand Hall Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-8 sm:space-y-10">
+
+    <!-- Grand Hall Hero Banner with Spotlight Effect -->
+    <section class="spotlight relative overflow-hidden rounded-3xl bg-slate-900/60 border border-amber-900/40 p-5 sm:p-8 md:p-10 backdrop-blur shadow-2xl space-y-6">
+      <div class="max-w-3xl space-y-3">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+          <i class="ph-bold ph-sparkle text-amber-400 animate-pulse"></i>
+          <span>KHÔNG GIAN TRIỂN LÃM HIỆN VẬT TƯƠNG TÁC ĐA CHIỀU</span>
+        </div>
+        
+        <h2 class="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+          Bảo Tàng Di Sản Số & <span class="bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">Thư Tịch Cổ</span>
+        </h2>
+        
+        <p class="text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed pt-1">
+          Nơi các ấn bản quý, địa chí làng xã, thần tích và luận án khoa học được phục dựng nguyên bản: 
+          Chiêm ngưỡng <strong class="text-amber-200">bản scan ảnh gốc độ phân giải cao</strong>, 
+          lật mở từng trang sách trong <strong class="text-amber-200">không gian 3D tương tác</strong>, 
+          lắng nghe <strong class="text-amber-200">AI Audio Guide thuyết minh</strong> và đặt câu hỏi đối thoại trực tiếp cùng hiện vật lịch sử.
+        </p>
+      </div>
+
+      <!-- Quick Museum Counters -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-4 border-t border-amber-900/30">
+        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-amber-900/30 spotlight-card">
+          <p class="text-[11px] text-amber-200/70 flex items-center gap-1.5">
+            <i class="ph-bold ph-certificate text-amber-400"></i> Hiện vật di sản
+          </p>
+          <p id="statArtifacts" class="text-2xl sm:text-3xl font-black text-white mt-1">--</p>
+        </div>
+        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-amber-900/30 spotlight-card">
+          <p class="text-[11px] text-amber-200/70 flex items-center gap-1.5">
+            <i class="ph-bold ph-file-text text-amber-400"></i> Trang tư liệu gốc
+          </p>
+          <p id="statPages" class="text-2xl sm:text-3xl font-black text-amber-300 mt-1">--</p>
+        </div>
+        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-amber-900/30 spotlight-card">
+          <p class="text-[11px] text-amber-200/70 flex items-center gap-1.5">
+            <i class="ph-bold ph-translate text-amber-400"></i> Từ vựng đã số hóa
+          </p>
+          <p id="statWords" class="text-2xl sm:text-3xl font-black text-cyan-300 mt-1">--</p>
+        </div>
+        <div class="p-3.5 bg-slate-950/70 rounded-2xl border border-amber-900/30 spotlight-card">
+          <p class="text-[11px] text-amber-200/70 flex items-center gap-1.5">
+            <i class="ph-bold ph-compass text-amber-400"></i> Gian chuyên đề
+          </p>
+          <p id="statHalls" class="text-2xl sm:text-3xl font-black text-emerald-300 mt-1">--</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Museum Halls Filter Navigation -->
+    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-3 sm:mx-0 px-3 sm:px-0" id="hallsNav">
+      <button data-hall="all" class="hall-nav-btn active px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-600 to-yellow-600 text-slate-950 shadow-md shadow-amber-600/20 transition shrink-0">
+        🏛️ Toàn Bộ Hiện Vật
+      </button>
+    </div>
+
+    <!-- Exhibition Halls Container -->
+    <div id="exhibitionHallsContainer" class="space-y-10">
+      <!-- Loading Skeleton -->
+      <div class="py-16 text-center text-slate-400 space-y-3">
+        <i class="ph-bold ph-spinner animate-spin text-4xl text-amber-400 inline-block"></i>
+        <p class="text-sm font-medium text-amber-200/70">Đang chuẩn bị không gian triển lãm...</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Audio Guide Quick Preview Modal -->
+  <div id="audioModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div id="audioBackdrop" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+    <div class="relative bg-slate-900 border border-amber-500/40 rounded-3xl p-6 max-w-md w-full shadow-2xl z-10 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+            <i class="ph-bold ph-headphones"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">AI Heritage Audio Guide</h3>
+            <p class="text-[10px] text-amber-300/80">Thuyết minh viên bảo tàng số</p>
+          </div>
+        </div>
+        <button id="closeAudioModalBtn" class="text-slate-400 hover:text-white p-1 text-lg">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <h4 id="audioBookTitle" class="text-base font-bold text-white leading-tight">---</h4>
+        <p id="audioBookEra" class="text-xs text-amber-400 font-medium">---</p>
+        <div id="audioTextContent" class="h-36 overflow-y-auto p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 leading-relaxed italic">
+          Đang nạp thuyết minh...
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <button id="togglePlayAudioBtn" class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition">
+          <i class="ph-bold ph-play" id="audioPlayIcon"></i>
+          <span id="audioPlayText">Phát thuyết minh</span>
+        </button>
+        <button id="stopAudioBtn" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+          Dừng lại
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-amber-900/30 py-6 text-center text-xs text-slate-500 mt-12">
+    Bảo Tàng Số Di Sản Văn Hóa & Tri Thức • Số Hóa Bền Vững Đa Chiều
+  </footer>
+
+  <script>
+    let museumData = null;
+    let activeHallFilter = 'all';
+    let currentSpeechUtterance = null;
+    let isPlayingAudio = false;
+
+    const statArtifacts = document.getElementById('statArtifacts');
+    const statPages = document.getElementById('statPages');
+    const statWords = document.getElementById('statWords');
+    const statHalls = document.getElementById('statHalls');
+    const hallsNav = document.getElementById('hallsNav');
+    const exhibitionHallsContainer = document.getElementById('exhibitionHallsContainer');
+
+    const audioModal = document.getElementById('audioModal');
+    const audioBackdrop = document.getElementById('audioBackdrop');
+    const closeAudioModalBtn = document.getElementById('closeAudioModalBtn');
+    const audioBookTitle = document.getElementById('audioBookTitle');
+    const audioBookEra = document.getElementById('audioBookEra');
+    const audioTextContent = document.getElementById('audioTextContent');
+    const togglePlayAudioBtn = document.getElementById('togglePlayAudioBtn');
+    const audioPlayIcon = document.getElementById('audioPlayIcon');
+    const audioPlayText = document.getElementById('audioPlayText');
+    const stopAudioBtn = document.getElementById('stopAudioBtn');
+
+    async function loadMuseumData() {
+      try {
+        const res = await fetch('/api/museum/exhibits');
+        museumData = await res.json();
+
+        // Update stats
+        statArtifacts.textContent = museumData.stats.total_artifacts;
+        statPages.textContent = museumData.stats.total_pages.toLocaleString();
+        statWords.textContent = museumData.stats.total_words.toLocaleString();
+        statHalls.textContent = museumData.stats.total_halls;
+
+        renderHallsNav();
+        renderExhibits();
+      } catch (err) {
+        console.error('Error loading museum exhibits:', err);
+        exhibitionHallsContainer.innerHTML = `
+          <div class="py-12 text-center text-red-400 text-sm">
+            <i class="ph-bold ph-warning text-3xl mb-2 inline-block"></i>
+            <p>Không thể kết nối đến kho lưu trữ bảo tàng. Vui lòng thử lại sau.</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderHallsNav() {
+      if (!museumData || !museumData.halls) return;
+
+      hallsNav.innerHTML = `
+        <button data-hall="all" class="hall-nav-btn ${activeHallFilter === 'all' ? 'active bg-gradient-to-r from-amber-600 to-yellow-600 text-slate-950' : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'} px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition shrink-0">
+          🏛️ Toàn Bộ Hiện Vật
+        </button>
+      `;
+
+      museumData.halls.forEach(h => {
+        const btn = document.createElement('button');
+        btn.dataset.hall = h.name;
+        btn.className = `hall-nav-btn ${activeHallFilter === h.name ? 'active bg-gradient-to-r from-amber-600 to-yellow-600 text-slate-950' : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'} px-4 py-2 rounded-xl text-xs font-semibold transition shrink-0 flex items-center gap-1.5`;
+        btn.innerHTML = `<i class="ph-bold ${h.icon}"></i> ${escapeHtml(h.title)} (${h.artifacts.length})`;
+        hallsNav.appendChild(btn);
+      });
+
+      document.querySelectorAll('.hall-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeHallFilter = btn.dataset.hall;
+          renderHallsNav();
+          renderExhibits();
+        });
+      });
+    }
+
+    function renderExhibits() {
+      if (!museumData || !museumData.halls) return;
+
+      const filteredHalls = activeHallFilter === 'all' 
+        ? museumData.halls 
+        : museumData.halls.filter(h => h.name === activeHallFilter);
+
+      if (filteredHalls.length === 0 || filteredHalls.every(h => h.artifacts.length === 0)) {
+        exhibitionHallsContainer.innerHTML = `
+          <div class="py-16 text-center text-slate-500">
+            <i class="ph-bold ph-archive text-4xl mb-2 inline-block"></i>
+            <p class="text-sm">Chưa có hiện vật nào trong gian trưng bày này.</p>
+          </div>
+        `;
+        return;
+      }
+
+      exhibitionHallsContainer.innerHTML = filteredHalls.map(hall => {
+        if (hall.artifacts.length === 0) return '';
+
+        return `
+          <section class="space-y-4">
+            <!-- Hall Header Banner -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-900/30">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${hall.color} border ${hall.border} flex items-center justify-center text-amber-400 text-xl shrink-0 shadow-lg">
+                  <i class="ph-bold ${hall.icon}"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-lg sm:text-xl font-black text-white">${escapeHtml(hall.title)}</h3>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      ${hall.artifacts.length} hiện vật
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(hall.subtitle)}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Artifacts Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 pt-2">
+              ${hall.artifacts.map(a => renderArtifactCard(a)).join('')}
+            </div>
+          </section>
+        `;
+      }).join('');
+    }
+
+    function renderArtifactCard(a) {
+      const cover = a.cover_image || '/covers/default-book.jpg';
+      const artifactCode = a.artifact_code || `HERITAGE-${a.id}`;
+      const periodEra = a.period_era || 'Tư liệu Lịch sử';
+      const curatorNotes = a.curator_notes || a.summary || 'Hiện vật quý được phục dựng nguyên bản.';
+
+      return `
+        <div class="group relative flex flex-col bg-slate-900/70 rounded-2xl border border-amber-900/30 overflow-hidden hover:border-amber-500/60 hover:shadow-2xl hover:shadow-amber-500/10 transition duration-300">
+          
+          <!-- Artifact Thumbnail Container -->
+          <div class="relative aspect-[3/4] bg-slate-950 overflow-hidden">
+            <img 
+              src="${cover}" 
+              alt="${escapeHtml(a.title)}" 
+              class="w-full h-full object-cover object-top group-hover:scale-105 transition duration-500"
+              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80';"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent"></div>
+            
+            <!-- Artifact Code Tag -->
+            <div class="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-lg text-[9px] font-mono font-bold bg-slate-950/90 text-amber-300 border border-amber-500/40 backdrop-blur tracking-wider">
+              ${escapeHtml(artifactCode)}
+            </div>
+
+            <!-- Period / Era Tag -->
+            <div class="absolute bottom-2.5 left-2.5 right-2.5 px-2.5 py-1 rounded-md text-[10px] font-medium bg-slate-950/85 text-amber-200 border border-amber-900/40 backdrop-blur truncate">
+              <i class="ph-bold ph-hourglass text-amber-400 mr-1"></i> ${escapeHtml(periodEra)}
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <h4 class="font-bold text-sm text-white line-clamp-2 leading-snug group-hover:text-amber-300 transition" title="${escapeHtml(a.title)}">
+                ${escapeHtml(a.title)}
+              </h4>
+              <p class="text-[11px] text-slate-400 mt-1.5 line-clamp-2 leading-relaxed italic">
+                "${escapeHtml(curatorNotes)}"
+              </p>
+            </div>
+
+            <!-- Provenance & Material Details -->
+            <div class="pt-2 border-t border-amber-900/20 space-y-2 text-[10px] text-slate-400">
+              <div class="flex items-center justify-between">
+                <span><i class="ph-bold ph-files text-amber-400"></i> ${a.total_pages} trang scan gốc</span>
+                <span><i class="ph-bold ph-text-aa text-amber-400"></i> ${(a.word_count || 0).toLocaleString()} từ</span>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <a href="/museum/exhibit/${a.slug}" class="py-2 px-3 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-slate-950 text-xs font-bold text-center flex items-center justify-center gap-1 shadow-md shadow-amber-600/20 transition">
+                  <i class="ph-bold ph-eye"></i> Triển Lãm
+                </a>
+                <button onclick="openAudioGuide('${escapeHtml(a.title)}', '${escapeHtml(periodEra)}', '${escapeHtml(curatorNotes)}')" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-semibold flex items-center justify-center gap-1 transition" title="Nghe thuyết minh">
+                  <i class="ph-bold ph-headphones"></i> Audio
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    // Audio Guide Handlers (Web Speech Synthesis)
+    function openAudioGuide(title, era, text) {
+      audioBookTitle.textContent = title;
+      audioBookEra.textContent = era;
+      audioTextContent.textContent = text;
+      audioModal.classList.remove('hidden');
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        isPlayingAudio = false;
+        audioPlayIcon.className = 'ph-bold ph-play';
+        audioPlayText.textContent = 'Phát thuyết minh';
+      }
+    }
+
+    function closeAudioModal() {
+      audioModal.classList.add('hidden');
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        isPlayingAudio = false;
+      }
+    }
+
+    closeAudioModalBtn.addEventListener('click', closeAudioModal);
+    audioBackdrop.addEventListener('click', closeAudioModal);
+    stopAudioBtn.addEventListener('click', () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        isPlayingAudio = false;
+        audioPlayIcon.className = 'ph-bold ph-play';
+        audioPlayText.textContent = 'Phát thuyết minh';
+      }
+    });
+
+    togglePlayAudioBtn.addEventListener('click', () => {
+      if (!('speechSynthesis' in window)) {
+        alert('Trình duyệt của bạn không hỗ trợ tính năng thuyết minh âm thanh.');
+        return;
+      }
+
+      if (isPlayingAudio) {
+        window.speechSynthesis.cancel();
+        isPlayingAudio = false;
+        audioPlayIcon.className = 'ph-bold ph-play';
+        audioPlayText.textContent = 'Phát thuyết minh';
+        return;
+      }
+
+      const speechText = `Chào mừng quý khách đến với không gian triển lãm di sản số. Trước mắt quý khách là hiện vật: ${audioBookTitle.textContent}. Thuộc thời kỳ: ${audioBookEra.textContent}. Thuyết minh hiện vật: ${audioTextContent.textContent}`;
+      
+      currentSpeechUtterance = new SpeechSynthesisUtterance(speechText);
+      currentSpeechUtterance.lang = 'vi-VN';
+      currentSpeechUtterance.rate = 0.95;
+
+      currentSpeechUtterance.onend = () => {
+        isPlayingAudio = false;
+        audioPlayIcon.className = 'ph-bold ph-play';
+        audioPlayText.textContent = 'Phát thuyết minh';
+      };
+
+      window.speechSynthesis.speak(currentSpeechUtterance);
+      isPlayingAudio = true;
+      audioPlayIcon.className = 'ph-bold ph-pause';
+      audioPlayText.textContent = 'Tạm dừng';
+    });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Initial Load
+    loadMuseumData();
+  </script>
+</body>
+</html>
