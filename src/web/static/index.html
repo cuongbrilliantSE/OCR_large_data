@@ -38,61 +38,63 @@
 <body class="min-h-full flex flex-col font-sans antialiased bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
 
   <!-- Navigation Bar -->
-  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-          <i class="ph-bold ph-book-open text-white text-2xl"></i>
+  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+          <i class="ph-bold ph-book-open text-white text-xl sm:text-2xl"></i>
         </div>
-        <div>
-          <h1 class="text-lg font-bold bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+        <div class="min-w-0">
+          <h1 class="text-base sm:text-lg font-bold bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent truncate">
             Book OCR Studio
           </h1>
-          <p class="text-xs text-slate-400">Số hóa hàng triệu trang sách sang văn bản chất lượng cao</p>
+          <p class="text-[11px] text-slate-400 truncate hidden md:block">Số hóa hàng triệu trang sách sang văn bản chất lượng cao</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 shrink-0">
         <!-- Navigation Tabs -->
-        <nav class="flex items-center gap-1.5 mr-2">
-          <a href="/" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 transition flex items-center gap-1.5">
-            <i class="ph-bold ph-lightning"></i> OCR Studio
+        <nav class="flex items-center gap-1 sm:gap-1.5">
+          <a href="/" class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 transition flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <i class="ph-bold ph-lightning"></i>
+            <span class="inline sm:hidden">Studio</span>
+            <span class="hidden sm:inline">OCR Studio</span>
           </a>
-          <a href="/library" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
-            <i class="ph-bold ph-books"></i> Thư Viện Sách
+          <a href="/library" class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <i class="ph-bold ph-books"></i>
+            <span>Thư Viện</span>
           </a>
         </nav>
 
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          AI Vision Engine (Active)
+          AI Engine (Active)
         </span>
       </div>
     </div>
   </header>
 
   <!-- Main Content Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
 
-    <!-- Upload Section -->
     <!-- Input Section: Upload File or Google Drive -->
-    <section class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-xl backdrop-blur space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+    <section class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur space-y-4 sm:space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
         <div>
-          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+          <h2 class="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
             <i class="ph-bold ph-book-open text-emerald-400"></i>
             <span>Nạp Dữ Liệu Sách Đầu Vào</span>
           </h2>
-          <p class="text-xs text-slate-400 mt-0.5">Tải file nén từ máy tính hoặc dán link chia sẻ từ Google Drive để OCR tự động</p>
+          <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Tải file nén từ máy tính hoặc dán link chia sẻ từ Google Drive để OCR tự động</p>
         </div>
 
         <!-- Mode Switcher Tabs -->
-        <div class="flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs">
-          <button type="button" id="tabUploadBtn" class="px-4 py-1.5 rounded-lg font-medium transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            <i class="ph-bold ph-file-archive mr-1"></i> File nén từ máy
+        <div class="grid grid-cols-2 sm:flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs w-full sm:w-auto shrink-0">
+          <button type="button" id="tabUploadBtn" class="px-3 sm:px-4 py-1.5 rounded-lg font-medium transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-center">
+            <i class="ph-bold ph-file-archive mr-1"></i> File nén
           </button>
-          <button type="button" id="tabGdriveBtn" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-slate-200">
-            <i class="ph-bold ph-google-drive-logo mr-1"></i> Link Google Drive
+          <button type="button" id="tabGdriveBtn" class="px-3 sm:px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-slate-200 text-center">
+            <i class="ph-bold ph-google-drive-logo mr-1"></i> Google Drive
           </button>
         </div>
       </div>
@@ -100,45 +102,45 @@
       <!-- Tab 1: Local Archive File Upload Form -->
       <form id="uploadForm" class="space-y-4">
         <!-- Dropzone Area -->
-        <div id="dropzone" class="border-2 border-dashed border-slate-700 hover:border-emerald-500/80 rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 bg-slate-950/40 hover:bg-slate-900/80">
+        <div id="dropzone" class="border-2 border-dashed border-slate-700 hover:border-emerald-500/80 rounded-2xl p-5 sm:p-8 text-center cursor-pointer transition-all duration-200 bg-slate-950/40 hover:bg-slate-900/80">
           <input type="file" id="archiveFileInput" accept=".rar,.zip,.7z,.tar,.gz" class="hidden">
           
-          <div id="dropzoneContent" class="space-y-3">
-            <div class="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-3xl">
+          <div id="dropzoneContent" class="space-y-2.5 sm:space-y-3">
+            <div class="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl sm:text-3xl">
               <i class="ph-bold ph-file-archive"></i>
             </div>
             <div>
-              <p class="text-sm font-medium text-slate-200">
-                Kéo thả file <span class="text-emerald-400 font-semibold">.rar</span> hoặc <span class="text-emerald-400 font-semibold">.zip</span> vào đây, hoặc <span class="text-emerald-400 underline">bấm để chọn file</span>
+              <p class="text-xs sm:text-sm font-medium text-slate-200">
+                Kéo thả file <span class="text-emerald-400 font-semibold">.rar</span> hoặc <span class="text-emerald-400 font-semibold">.zip</span> vào đây, hoặc <span class="text-emerald-400 underline">bấm chọn file</span>
               </p>
-              <p class="text-xs text-slate-400 mt-1">Hỗ trợ file nén ảnh sách không giới hạn dung lượng</p>
+              <p class="text-[11px] text-slate-400 mt-1">Hỗ trợ file nén ảnh sách không giới hạn dung lượng</p>
             </div>
           </div>
 
-          <div id="fileSelectedInfo" class="hidden items-center justify-between bg-slate-800/80 px-4 py-3 rounded-xl border border-slate-700">
-            <div class="flex items-center gap-3">
-              <i class="ph-bold ph-file-zip text-emerald-400 text-2xl"></i>
-              <div class="text-left">
-                <p id="selectedFileName" class="text-sm font-medium text-slate-200"></p>
-                <p id="selectedFileSize" class="text-xs text-slate-400"></p>
+          <div id="fileSelectedInfo" class="hidden items-center justify-between bg-slate-800/80 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-700">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <i class="ph-bold ph-file-zip text-emerald-400 text-xl sm:text-2xl shrink-0"></i>
+              <div class="text-left min-w-0">
+                <p id="selectedFileName" class="text-xs sm:text-sm font-medium text-slate-200 truncate"></p>
+                <p id="selectedFileSize" class="text-[11px] text-slate-400"></p>
               </div>
             </div>
-            <button type="button" id="removeFileBtn" class="text-slate-400 hover:text-red-400 text-lg p-1">
+            <button type="button" id="removeFileBtn" class="text-slate-400 hover:text-red-400 text-lg p-1 shrink-0 ml-2">
               <i class="ph-bold ph-x"></i>
             </button>
           </div>
         </div>
 
         <!-- Options row -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pt-1">
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Tên cuốn sách (tùy chọn):</label>
-            <input type="text" id="bookNameInput" placeholder="Mặc định lấy theo tên file nén" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 transition">
+            <input type="text" id="bookNameInput" placeholder="Mặc định lấy theo tên file nén" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 transition">
           </div>
 
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Số luồng xử lý song song:</label>
-            <select id="workersSelect" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition">
+            <select id="workersSelect" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition">
               <option value="2" selected>2 luồng (Khuyên dùng - Ổn định API)</option>
               <option value="3">3 luồng</option>
               <option value="4">4 luồng</option>
@@ -146,8 +148,8 @@
             </select>
           </div>
 
-          <div class="flex items-end">
-            <button type="submit" id="submitBtn" class="w-full h-[42px] bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-medium text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed">
+          <div class="sm:col-span-2 lg:col-span-1 flex items-end">
+            <button type="submit" id="submitBtn" class="w-full h-11 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed">
               <i class="ph-bold ph-play"></i>
               <span>Giải Nén & Bắt Đầu OCR</span>
             </button>
@@ -169,32 +171,32 @@
       <!-- Tab 2: Google Drive Download Form -->
       <form id="gdriveForm" class="hidden space-y-4">
         <!-- Google Drive Input Area -->
-        <div class="bg-slate-950/40 border border-slate-800 rounded-2xl p-6 space-y-3">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-2xl shrink-0">
+        <div class="bg-slate-950/40 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl sm:text-2xl shrink-0">
               <i class="ph-bold ph-google-drive-logo"></i>
             </div>
-            <div class="flex-1">
-              <label class="block text-xs font-semibold text-slate-200 mb-1">Dán link chia sẻ Google Drive (File nén hoặc Thư mục ảnh):</label>
-              <input type="url" id="gdriveUrlInput" placeholder="Ví dụ: https://drive.google.com/file/d/... hoặc https://drive.google.com/drive/folders/..." required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition">
+            <div class="flex-1 min-w-0">
+              <label class="block text-xs font-semibold text-slate-200 mb-1">Dán link Google Drive (File nén hoặc Thư mục ảnh):</label>
+              <input type="url" id="gdriveUrlInput" placeholder="https://drive.google.com/file/d/... hoặc folders/..." required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition">
             </div>
           </div>
-          <div class="text-[11px] text-slate-400 flex items-center gap-1.5 pl-2 sm:pl-15">
-            <i class="ph-bold ph-info text-cyan-400"></i>
-            <span>Yêu cầu quyền chia sẻ: <strong class="text-cyan-300">"Bất kỳ ai có đường liên kết đều có thể xem"</strong> (Anyone with the link can view).</span>
+          <div class="text-[11px] text-slate-400 flex items-center gap-1.5 pl-1 sm:pl-14">
+            <i class="ph-bold ph-info text-cyan-400 shrink-0"></i>
+            <span>Yêu cầu quyền chia sẻ: <strong class="text-cyan-300">"Bất kỳ ai có đường liên kết đều có thể xem"</strong></span>
           </div>
         </div>
 
         <!-- Options row -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pt-1">
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Tên cuốn sách (tùy chọn):</label>
-            <input type="text" id="gdriveBookNameInput" placeholder="Mặc định lấy theo tên Google Drive" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 transition">
+            <input type="text" id="gdriveBookNameInput" placeholder="Mặc định lấy theo tên Google Drive" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 transition">
           </div>
 
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Số luồng xử lý song song:</label>
-            <select id="gdriveWorkersSelect" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 transition">
+            <select id="gdriveWorkersSelect" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-cyan-500 transition">
               <option value="2" selected>2 luồng (Khuyên dùng - Ổn định API)</option>
               <option value="3">3 luồng</option>
               <option value="4">4 luồng</option>
@@ -202,8 +204,8 @@
             </select>
           </div>
 
-          <div class="flex items-end">
-            <button type="submit" id="gdriveSubmitBtn" class="w-full h-[42px] bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed">
+          <div class="sm:col-span-2 lg:col-span-1 flex items-end">
+            <button type="submit" id="gdriveSubmitBtn" class="w-full h-11 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed">
               <i class="ph-bold ph-cloud-arrow-down"></i>
               <span>Kéo Về Drive & Bắt Đầu OCR</span>
             </button>
@@ -211,8 +213,8 @@
         </div>
 
         <!-- GDrive loading indicator & live progress -->
-        <div id="gdriveStatusContainer" class="hidden flex-col space-y-3 p-4 rounded-xl bg-slate-950/80 border border-cyan-500/30">
-          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div id="gdriveStatusContainer" class="hidden flex-col space-y-3 p-3 sm:p-4 rounded-xl bg-slate-950/80 border border-cyan-500/30">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs">
             <div class="flex items-center gap-2 text-cyan-300 font-medium">
               <i class="ph-bold ph-spinner animate-spin text-base text-cyan-400"></i>
               <span id="gdriveStatusText">Đang kết nối Google Drive...</span>
@@ -232,7 +234,7 @@
           <div class="pt-1">
             <div class="flex items-center justify-between mb-1">
               <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider flex items-center gap-1">
-                <i class="ph-bold ph-terminal-window text-cyan-400"></i> Nhật ký tải dữ liệu Drive:
+                <i class="ph-bold ph-terminal-window text-cyan-400"></i> Nhật ký tải Drive:
               </span>
               <span class="text-[10px] text-slate-500">Tự động cuộn</span>
             </div>
@@ -244,88 +246,87 @@
       </form>
     </section>
 
-
     <!-- Active Job Dashboard (Hidden if no active job) -->
-    <section id="activeJobSection" class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-xl backdrop-blur space-y-6">
-      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
-        <div>
+    <section id="activeJobSection" class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur space-y-5 sm:space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+        <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <span id="jobStatusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span id="jobStatusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
               ĐANG XỬ LÝ
             </span>
-            <h3 id="currentBookTitle" class="text-lg font-bold text-white">---</h3>
+            <h3 id="currentBookTitle" class="text-base sm:text-lg font-bold text-white truncate max-w-[200px] sm:max-w-xs md:max-w-md">---</h3>
           </div>
-          <p class="text-xs text-slate-400 mt-0.5">Tiến trình đọc hiểu văn bản & phân chia trang thông minh</p>
+          <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Tiến trình đọc hiểu văn bản & phân chia trang thông minh</p>
         </div>
 
         <!-- Controls: Pause, Resume, Retry, Download -->
-        <div class="flex flex-wrap items-center gap-2.5">
-          <button id="pauseJobBtn" class="px-3 py-1.5 rounded-xl border border-amber-500/30 hover:bg-amber-500/10 text-amber-400 text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="ph-bold ph-pause"></i> Tạm dừng
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="pauseJobBtn" class="px-2.5 sm:px-3 py-1.5 rounded-xl border border-amber-500/30 hover:bg-amber-500/10 text-amber-400 text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="ph-bold ph-pause"></i> <span>Tạm dừng</span>
           </button>
-          <button id="resumeJobBtn" class="hidden px-3 py-1.5 rounded-xl border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="ph-bold ph-play"></i> Tiếp tục
+          <button id="resumeJobBtn" class="hidden px-2.5 sm:px-3 py-1.5 rounded-xl border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="ph-bold ph-play"></i> <span>Tiếp tục</span>
           </button>
-          <button id="retryJobBtn" class="hidden px-3 py-1.5 rounded-xl border border-red-500/30 hover:bg-red-500/10 text-red-400 text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="ph-bold ph-arrow-counter-clockwise"></i> Thử lại trang lỗi
+          <button id="retryJobBtn" class="hidden px-2.5 sm:px-3 py-1.5 rounded-xl border border-red-500/30 hover:bg-red-500/10 text-red-400 text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="ph-bold ph-arrow-counter-clockwise"></i> <span>Thử lại lỗi</span>
           </button>
-          <a id="downloadTextBtn" href="#" class="hidden px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 transition">
-            <i class="ph-bold ph-download-simple"></i> Tải sách (.TXT)
+          <a id="downloadTextBtn" href="#" class="hidden px-3 sm:px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 transition">
+            <i class="ph-bold ph-download-simple"></i> <span>Tải .TXT</span>
           </a>
-          <a id="downloadZipBtn" href="#" class="hidden px-4 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-cyan-600/20 transition">
-            <i class="ph-bold ph-file-zip"></i> Tải trọn gói (.ZIP)
+          <a id="downloadZipBtn" href="#" class="hidden px-3 sm:px-4 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-cyan-600/20 transition">
+            <i class="ph-bold ph-file-zip"></i> <span>Tải .ZIP</span>
           </a>
         </div>
       </div>
 
       <!-- Main Progress Bar -->
       <div class="space-y-2">
-        <div class="flex justify-between items-baseline text-sm">
-          <span class="text-slate-300 font-medium flex items-center gap-2">
+        <div class="flex justify-between items-baseline text-xs sm:text-sm">
+          <span class="text-slate-300 font-medium flex items-center gap-1.5 sm:gap-2">
             <i class="ph-bold ph-chart-donut text-emerald-400"></i> Tiến độ tổng thể
           </span>
-          <span id="jobPercent" class="text-xl font-bold text-emerald-400">0%</span>
+          <span id="jobPercent" class="text-lg sm:text-xl font-bold text-emerald-400">0%</span>
         </div>
-        <div class="w-full bg-slate-950 rounded-full h-3.5 p-0.5 border border-slate-800 overflow-hidden">
+        <div class="w-full bg-slate-950 rounded-full h-3 sm:h-3.5 p-0.5 border border-slate-800 overflow-hidden">
           <div id="jobProgressBar" class="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-full rounded-full w-0 transition-all duration-500"></div>
         </div>
       </div>
 
-      <!-- Metric Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5">
-          <div class="text-xs text-slate-400">Tổng số trang</div>
-          <div id="statTotal" class="text-2xl font-bold text-white mt-1">0</div>
+      <!-- Metric Cards: Responsive 2-col on mobile, 3 on tablet, 5 on desktop -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 sm:p-3.5">
+          <div class="text-[11px] sm:text-xs text-slate-400">Tổng số trang</div>
+          <div id="statTotal" class="text-xl sm:text-2xl font-bold text-white mt-1">0</div>
         </div>
-        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5">
-          <div class="text-xs text-emerald-400">Đã hoàn thành</div>
-          <div id="statDone" class="text-2xl font-bold text-emerald-400 mt-1">0</div>
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 sm:p-3.5">
+          <div class="text-[11px] sm:text-xs text-emerald-400">Đã hoàn thành</div>
+          <div id="statDone" class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">0</div>
         </div>
-        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5">
-          <div class="text-xs text-amber-400">Đang chờ xử lý</div>
-          <div id="statPending" class="text-2xl font-bold text-amber-400 mt-1">0</div>
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 sm:p-3.5">
+          <div class="text-[11px] sm:text-xs text-amber-400">Đang chờ xử lý</div>
+          <div id="statPending" class="text-xl sm:text-2xl font-bold text-amber-400 mt-1">0</div>
         </div>
-        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5">
-          <div class="text-xs text-red-400">Bị lỗi</div>
-          <div id="statFailed" class="text-2xl font-bold text-red-400 mt-1">0</div>
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 sm:p-3.5">
+          <div class="text-[11px] sm:text-xs text-red-400">Bị lỗi</div>
+          <div id="statFailed" class="text-xl sm:text-2xl font-bold text-red-400 mt-1">0</div>
         </div>
-        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5">
-          <div class="text-xs text-cyan-400">TB / trang</div>
-          <div id="statAvgTime" class="text-2xl font-bold text-cyan-400 mt-1">0s</div>
+        <div class="col-span-2 sm:col-span-1 bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 sm:p-3.5">
+          <div class="text-[11px] sm:text-xs text-cyan-400">TB / trang</div>
+          <div id="statAvgTime" class="text-xl sm:text-2xl font-bold text-cyan-400 mt-1">0s</div>
         </div>
       </div>
 
       <!-- Split details: Live Preview & Live Logs -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 pt-1">
         <!-- Live Text Preview -->
         <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
               <i class="ph-bold ph-eye text-cyan-400"></i> Xem trước trang vừa OCR
             </span>
-            <span id="previewFileName" class="text-xs font-mono text-slate-400">---</span>
+            <span id="previewFileName" class="text-[11px] font-mono text-slate-400 truncate">---</span>
           </div>
-          <div id="previewTextContent" class="h-64 overflow-y-auto bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs font-mono leading-relaxed text-slate-300 whitespace-pre-wrap select-text">
+          <div id="previewTextContent" class="h-48 sm:h-64 overflow-y-auto bg-slate-950/80 border border-slate-800 rounded-xl p-3 sm:p-4 text-xs font-mono leading-relaxed text-slate-300 whitespace-pre-wrap select-text break-words">
 Chưa có dữ liệu trích xuất...
           </div>
         </div>
@@ -333,12 +334,12 @@ Chưa có dữ liệu trích xuất...
         <!-- Live Logs Console -->
         <div class="space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <span class="text-[11px] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <i class="ph-bold ph-terminal-window text-emerald-400"></i> Nhật ký hoạt động
             </span>
             <span class="text-[10px] text-slate-500">Tự động cuộn</span>
           </div>
-          <div id="logConsole" class="h-64 overflow-y-auto bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs font-mono leading-relaxed text-slate-400 space-y-1">
+          <div id="logConsole" class="h-48 sm:h-64 overflow-y-auto bg-slate-950/80 border border-slate-800 rounded-xl p-3 sm:p-4 text-xs font-mono leading-relaxed text-slate-400 space-y-1 select-text">
             <div class="text-slate-500">[System] Sẵn sàng xử lý...</div>
           </div>
         </div>
@@ -346,29 +347,34 @@ Chưa có dữ liệu trích xuất...
     </section>
 
     <!-- Library Section: All Books in System -->
-    <section class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-xl backdrop-blur">
-      <div class="flex items-center justify-between mb-4">
+    <section class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 sm:mb-4">
         <div class="flex items-center gap-2">
-          <i class="ph-bold ph-books text-cyan-400 text-xl"></i>
-          <h2 class="text-base font-semibold text-white">Thư Viện Sách Đã Xử Lý</h2>
+          <i class="ph-bold ph-books text-cyan-400 text-lg sm:text-xl"></i>
+          <h2 class="text-sm sm:text-base font-semibold text-white">Thư Viện Sách Đã Xử Lý</h2>
         </div>
-        <button id="refreshBooksBtn" class="text-xs text-slate-400 hover:text-emerald-400 flex items-center gap-1 transition">
-          <i class="ph-bold ph-arrows-clockwise"></i> Làm mới danh sách
-        </button>
+        <div class="flex items-center justify-between sm:justify-end gap-3">
+          <span class="sm:hidden text-[11px] text-slate-500 flex items-center gap-1">
+            <i class="ph-bold ph-arrows-horizontal text-cyan-400"></i> Vuốt ngang xem bảng
+          </span>
+          <button id="refreshBooksBtn" class="text-xs text-slate-400 hover:text-emerald-400 flex items-center gap-1 transition shrink-0">
+            <i class="ph-bold ph-arrows-clockwise"></i> <span>Làm mới</span>
+          </button>
+        </div>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs text-slate-300">
+      <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+        <table class="min-w-[660px] w-full text-left text-xs text-slate-300">
           <thead class="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
             <tr>
-              <th class="py-3 px-4">Tên cuốn sách</th>
-              <th class="py-3 px-4">Tổng số trang</th>
-              <th class="py-3 px-4 text-emerald-400">Đã xong</th>
-              <th class="py-3 px-4 text-amber-400">Đang chờ</th>
-              <th class="py-3 px-4 text-red-400">Lỗi</th>
-              <th class="py-3 px-4">Tiến độ</th>
-              <th class="py-3 px-4">Trạng thái</th>
-              <th class="py-3 px-4 text-right">Tải về / Thao tác</th>
+              <th class="py-3 px-3.5">Tên cuốn sách</th>
+              <th class="py-3 px-3">Số trang</th>
+              <th class="py-3 px-3 text-emerald-400">Đã xong</th>
+              <th class="py-3 px-3 text-amber-400">Chờ</th>
+              <th class="py-3 px-3 text-red-400">Lỗi</th>
+              <th class="py-3 px-3">Tiến độ</th>
+              <th class="py-3 px-3">Trạng thái</th>
+              <th class="py-3 px-3 text-right">Tải về / Thao tác</th>
             </tr>
           </thead>
           <tbody id="booksTableBody" class="divide-y divide-slate-800/60">
@@ -872,41 +878,43 @@ Chưa có dữ liệu trích xuất...
 
           return `
             <tr class="hover:bg-slate-900/40 transition">
-              <td class="py-3 px-4 font-medium text-white flex items-center gap-2">
-                <i class="ph-bold ph-book text-emerald-400"></i>
-                <span>${escapeHtml(b.book_name)}</span>
+              <td class="py-3 px-3.5 font-medium text-white max-w-[180px] sm:max-w-[260px]">
+                <div class="flex items-center gap-2 min-w-0">
+                  <i class="ph-bold ph-book text-emerald-400 shrink-0"></i>
+                  <span class="truncate" title="${escapeHtml(b.book_name)}">${escapeHtml(b.book_name)}</span>
+                </div>
               </td>
-              <td class="py-3 px-4 font-mono text-slate-300">${b.total}</td>
-              <td class="py-3 px-4 font-mono text-emerald-400 font-semibold">${b.done}</td>
-              <td class="py-3 px-4 font-mono text-amber-400">${b.pending}</td>
-              <td class="py-3 px-4 font-mono ${b.failed > 0 ? 'text-red-400 font-bold' : 'text-slate-500'}">${b.failed}</td>
-              <td class="py-3 px-4">
+              <td class="py-3 px-3 font-mono text-slate-300">${b.total}</td>
+              <td class="py-3 px-3 font-mono text-emerald-400 font-semibold">${b.done}</td>
+              <td class="py-3 px-3 font-mono text-amber-400">${b.pending}</td>
+              <td class="py-3 px-3 font-mono ${b.failed > 0 ? 'text-red-400 font-bold' : 'text-slate-500'}">${b.failed}</td>
+              <td class="py-3 px-3">
                 <div class="flex items-center gap-2">
-                  <div class="w-16 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                  <div class="w-14 sm:w-16 bg-slate-800 rounded-full h-1.5 overflow-hidden shrink-0">
                     <div class="bg-emerald-500 h-full" style="width: ${b.percent}%"></div>
                   </div>
                   <span class="text-[10px] text-slate-400">${b.percent}%</span>
                 </div>
               </td>
-              <td class="py-3 px-4">${badge}</td>
-              <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+              <td class="py-3 px-3">${badge}</td>
+              <td class="py-3 px-3 text-right space-x-1 whitespace-nowrap">
                 ${(b.pending > 0 && b.status !== 'processing') ? `
-                  <button onclick="resumeBookDirect('${escapeHtml(b.book_name)}')" class="text-xs px-2.5 py-1 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition">
+                  <button onclick="resumeBookDirect('${escapeHtml(b.book_name)}')" class="text-xs px-2 sm:px-2.5 py-1 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition">
                     <i class="ph-bold ph-play"></i> Tiếp tục
                   </button>
                 ` : ''}
                 ${(b.failed > 0 && b.status !== 'processing') ? `
-                  <button onclick="retryBookDirect('${escapeHtml(b.book_name)}')" class="text-xs px-2.5 py-1 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30 transition">
-                    <i class="ph-bold ph-arrow-counter-clockwise"></i> Thử lại lỗi
+                  <button onclick="retryBookDirect('${escapeHtml(b.book_name)}')" class="text-xs px-2 sm:px-2.5 py-1 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30 transition">
+                    <i class="ph-bold ph-arrow-counter-clockwise"></i> Thử lại
                   </button>
                 ` : ''}
                 ${b.has_text_file ? `
-                  <a href="/api/download/text/${encodeURIComponent(b.book_name)}" class="text-xs px-2.5 py-1 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition">
+                  <a href="/api/download/text/${encodeURIComponent(b.book_name)}" class="text-xs px-2 sm:px-2.5 py-1 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition">
                     <i class="ph-bold ph-download-simple"></i> .TXT
                   </a>
                 ` : ''}
                 ${b.has_zip_file ? `
-                  <a href="/api/download/zip/${encodeURIComponent(b.book_name)}" class="text-xs px-2.5 py-1 rounded-lg bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/30 border border-cyan-500/30 transition">
+                  <a href="/api/download/zip/${encodeURIComponent(b.book_name)}" class="text-xs px-2 sm:px-2.5 py-1 rounded-lg bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/30 border border-cyan-500/30 transition">
                     <i class="ph-bold ph-file-zip"></i> .ZIP
                   </a>
                 ` : ''}

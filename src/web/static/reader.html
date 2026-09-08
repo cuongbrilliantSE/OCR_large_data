@@ -57,6 +57,48 @@
       border-color: #e0d0b0;
     }
 
+    /* Light Theme Text Colors */
+    body.theme-light .book-intro-card {
+      background-color: #ffffff;
+      border-color: #e5e7eb;
+    }
+    body.theme-light .book-intro-title {
+      color: #111827 !important;
+    }
+    body.theme-light .book-intro-desc {
+      color: #4b5563 !important;
+    }
+    body.theme-light .page-block {
+      border-color: #e5e7eb !important;
+    }
+    body.theme-light .page-header-divider {
+      border-color: #e5e7eb !important;
+    }
+    body.theme-light .page-text {
+      color: #1f2937 !important;
+    }
+
+    /* Sepia Theme Text Colors */
+    body.theme-sepia .book-intro-card {
+      background-color: #f4e8cc;
+      border-color: #e0d0b0;
+    }
+    body.theme-sepia .book-intro-title {
+      color: #2b1d0c !important;
+    }
+    body.theme-sepia .book-intro-desc {
+      color: #5c4033 !important;
+    }
+    body.theme-sepia .page-block {
+      border-color: #e0d0b0 !important;
+    }
+    body.theme-sepia .page-header-divider {
+      border-color: #e0d0b0 !important;
+    }
+    body.theme-sepia .page-text {
+      color: #2b1d0c !important;
+    }
+
     /* Text highlight */
     mark.search-highlight {
       background-color: #fef08a;
@@ -73,75 +115,122 @@
 <body class="theme-dark min-h-full flex flex-col font-sans antialiased transition-colors duration-200">
 
   <!-- Reader Top Bar -->
-  <header class="reader-header border-b border-slate-800/80 bg-slate-900/90 backdrop-blur sticky top-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6">
-    <!-- Left: Navigation & Book Info -->
-    <div class="flex items-center gap-3 min-w-0">
-      <a href="/library" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white transition flex items-center justify-center shrink-0" title="Quay lại Thư viện">
-        <i class="ph-bold ph-arrow-left text-lg"></i>
-      </a>
-      <div class="truncate">
-        <div class="flex items-center gap-2">
-          <h1 id="bookTitleDisplay" class="text-sm sm:text-base font-bold text-white truncate">
-            {{BOOK_TITLE}}
-          </h1>
-          <span id="categoryBadge" class="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            {{BOOK_CATEGORY}}
-          </span>
+  <header class="reader-header border-b border-slate-800/80 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-3 sm:px-6">
+    <div class="h-16 flex items-center justify-between gap-2">
+      <!-- Left: Navigation, Mobile TOC toggle & Book Info -->
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <a href="/library" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white transition flex items-center justify-center shrink-0" title="Quay lại Thư viện">
+          <i class="ph-bold ph-arrow-left text-base sm:text-lg"></i>
+        </a>
+        
+        <!-- Mobile TOC Button -->
+        <button id="mobileTocBtn" class="md:hidden p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-emerald-400 transition flex items-center justify-center shrink-0" title="Mục lục trang">
+          <i class="ph-bold ph-list-numbers text-base"></i>
+        </button>
+
+        <div class="truncate">
+          <div class="flex items-center gap-2">
+            <h1 id="bookTitleDisplay" class="text-xs sm:text-base font-bold text-white truncate max-w-[140px] xs:max-w-[200px] sm:max-w-xs md:max-w-md">
+              {{BOOK_TITLE}}
+            </h1>
+            <span id="categoryBadge" class="hidden lg:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+              {{BOOK_CATEGORY}}
+            </span>
+          </div>
+          <p class="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1.5 sm:gap-2">
+            <span id="pageCountDisplay">{{TOTAL_PAGES}} trang</span>
+            <span>•</span>
+            <span id="wordCountDisplay">{{WORD_COUNT}} từ</span>
+          </p>
         </div>
-        <p class="text-[11px] text-slate-400 flex items-center gap-2">
-          <span id="pageCountDisplay">{{TOTAL_PAGES}} trang</span>
-          <span>•</span>
-          <span id="wordCountDisplay">{{WORD_COUNT}} từ</span>
-        </p>
+      </div>
+
+      <!-- Right: Controls & Actions -->
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+        <!-- Desktop In-Book Search Input -->
+        <div class="relative hidden md:flex items-center">
+          <input 
+            type="text" 
+            id="inBookSearch" 
+            placeholder="Tìm từ khóa trong sách..." 
+            class="pl-8 pr-16 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 w-44 lg:w-56 transition"
+          >
+          <i class="ph-bold ph-magnifying-glass absolute left-2.5 text-slate-400 text-sm"></i>
+          <span id="searchMatchCount" class="absolute right-2 text-[10px] text-slate-400 font-mono"></span>
+        </div>
+
+        <!-- Mobile Search Toggle Button -->
+        <button id="toggleMobileSearchBtn" class="md:hidden p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Tìm từ khóa">
+          <i class="ph-bold ph-magnifying-glass text-sm"></i>
+        </button>
+
+        <!-- Font Size Adjuster (Visible on all screens!) -->
+        <div class="flex items-center bg-slate-800/80 border border-slate-700/80 rounded-xl p-0.5 text-xs">
+          <button id="fontDecBtn" class="px-2 py-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition text-xs font-semibold" title="Giảm cỡ chữ">A-</button>
+          <button id="fontIncBtn" class="px-2 py-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition text-xs font-semibold" title="Tăng cỡ chữ">A+</button>
+        </div>
+
+        <!-- Theme Switcher -->
+        <div class="flex items-center bg-slate-800/80 border border-slate-700/80 rounded-xl p-0.5 text-xs">
+          <button onclick="setTheme('dark')" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition" title="Giao diện tối">
+            <i class="ph-bold ph-moon"></i>
+          </button>
+          <button onclick="setTheme('sepia')" class="p-1.5 rounded-lg text-amber-300 hover:text-amber-100 hover:bg-slate-700 transition" title="Giao diện Sepia">
+            <i class="ph-bold ph-book"></i>
+          </button>
+          <button onclick="setTheme('light')" class="p-1.5 rounded-lg text-yellow-400 hover:text-yellow-200 hover:bg-slate-700 transition" title="Giao diện sáng">
+            <i class="ph-bold ph-sun"></i>
+          </button>
+        </div>
+
+        <!-- Share Button -->
+        <button onclick="copyShareLink()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition" title="Chia sẻ sách">
+          <i class="ph-bold ph-share-network text-emerald-400 text-sm"></i>
+          <span class="hidden sm:inline">Chia sẻ</span>
+        </button>
+
+        <!-- Download Button -->
+        <a id="downloadTxtBtn" href="/api/download/text/{{BOOK_TITLE_URL}}" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition" title="Tải file .TXT">
+          <i class="ph-bold ph-download-simple text-sm"></i>
+          <span class="hidden sm:inline">Tải .TXT</span>
+        </a>
       </div>
     </div>
 
-    <!-- Right: Controls & Actions -->
-    <div class="flex items-center gap-1.5 sm:gap-2">
-      <!-- Search Trigger Button -->
-      <div class="relative hidden md:flex items-center">
+    <!-- Mobile In-Book Search Dropdown Bar -->
+    <div id="mobileSearchBar" class="hidden md:hidden pb-3 pt-1 border-t border-slate-800/60">
+      <div class="relative flex items-center">
         <input 
           type="text" 
-          id="inBookSearch" 
-          placeholder="Tìm từ khóa trong sách..." 
-          class="pl-8 pr-16 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 w-52 transition"
+          id="mobileInBookSearch" 
+          placeholder="Nhập từ khóa tìm trong sách..." 
+          class="w-full pl-9 pr-20 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition"
         >
-        <i class="ph-bold ph-magnifying-glass absolute left-2.5 text-slate-400 text-sm"></i>
-        <span id="searchMatchCount" class="absolute right-2 text-[10px] text-slate-400 font-mono"></span>
+        <i class="ph-bold ph-magnifying-glass absolute left-3 text-slate-400 text-sm"></i>
+        <span id="mobileSearchMatchCount" class="absolute right-3 text-[10px] text-slate-400 font-mono"></span>
       </div>
-
-      <!-- Font Size Adjuster -->
-      <div class="hidden sm:flex items-center bg-slate-800/80 border border-slate-700/80 rounded-xl p-0.5 text-xs">
-        <button id="fontDecBtn" class="px-2 py-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition" title="Giảm cỡ chữ">A-</button>
-        <button id="fontIncBtn" class="px-2 py-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition" title="Tăng cỡ chữ">A+</button>
-      </div>
-
-      <!-- Theme Switcher -->
-      <div class="flex items-center bg-slate-800/80 border border-slate-700/80 rounded-xl p-0.5 text-xs">
-        <button onclick="setTheme('dark')" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition" title="Giao diện tối">
-          <i class="ph-bold ph-moon"></i>
-        </button>
-        <button onclick="setTheme('sepia')" class="p-1.5 rounded-lg text-amber-300 hover:text-amber-100 hover:bg-slate-700 transition" title="Giao diện trang sách (Sepia)">
-          <i class="ph-bold ph-book"></i>
-        </button>
-        <button onclick="setTheme('light')" class="p-1.5 rounded-lg text-yellow-400 hover:text-yellow-200 hover:bg-slate-700 transition" title="Giao diện sáng">
-          <i class="ph-bold ph-sun"></i>
-        </button>
-      </div>
-
-      <!-- Share Button -->
-      <button onclick="copyShareLink()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition" title="Chia sẻ sách">
-        <i class="ph-bold ph-share-network text-emerald-400"></i>
-        <span class="hidden sm:inline">Chia sẻ</span>
-      </button>
-
-      <!-- Download Button -->
-      <a id="downloadTxtBtn" href="/api/download/text/{{BOOK_TITLE_URL}}" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition">
-        <i class="ph-bold ph-download-simple"></i>
-        <span class="hidden sm:inline">Tải</span> .TXT
-      </a>
     </div>
   </header>
+
+  <!-- Mobile TOC Drawer Overlay & Panel -->
+  <div id="mobileTocDrawer" class="fixed inset-0 z-50 hidden md:hidden">
+    <!-- Backdrop -->
+    <div id="mobileTocBackdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"></div>
+    <!-- Drawer Panel -->
+    <div class="absolute inset-y-0 left-0 max-w-xs w-4/5 bg-slate-900 border-r border-slate-800 shadow-2xl flex flex-col z-10">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <span class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          <i class="ph-bold ph-list-numbers text-emerald-400 text-base"></i> Danh sách trang
+        </span>
+        <button id="closeMobileTocBtn" class="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800/60 text-base">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div id="mobilePagesList" class="flex-1 overflow-y-auto p-3 space-y-1 text-xs">
+        <div class="text-center py-6 text-slate-500">Đang tải mục lục...</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Reader Body Container -->
   <div class="flex-1 flex overflow-hidden">
@@ -162,33 +251,33 @@
     </aside>
 
     <!-- Main Text Content Area -->
-    <main class="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12" id="readerScrollArea">
+    <main class="flex-1 overflow-y-auto p-3 sm:p-8 lg:p-12" id="readerScrollArea">
       <div class="max-w-3xl mx-auto space-y-6">
         
         <!-- Book Cover & Header Intro in Reader -->
-        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 rounded-3xl bg-slate-900/40 border border-slate-800/60">
+        <div class="book-intro-card flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-slate-900/40 border border-slate-800/60">
           <img 
             id="bookCoverImg" 
             src="{{BOOK_COVER}}" 
             alt="{{BOOK_TITLE}}" 
-            class="w-32 h-44 rounded-2xl object-cover object-top shadow-xl shadow-black/50 border border-slate-800"
+            class="w-24 h-32 xs:w-28 xs:h-38 sm:w-32 sm:h-44 rounded-xl sm:rounded-2xl object-cover object-top shadow-xl shadow-black/50 border border-slate-800 shrink-0"
             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80';"
           />
-          <div class="space-y-2 text-center sm:text-left flex-1">
-            <h2 class="text-xl sm:text-2xl font-black text-white leading-tight">
+          <div class="space-y-1.5 sm:space-y-2 text-center sm:text-left flex-1 min-w-0">
+            <h2 class="book-intro-title text-lg sm:text-2xl font-black text-white leading-tight">
               {{BOOK_TITLE}}
             </h2>
             <p class="text-xs text-emerald-400 font-medium">
               Thể loại: {{BOOK_CATEGORY}}
             </p>
-            <p class="text-xs text-slate-400 leading-relaxed pt-1">
+            <p class="book-intro-desc text-xs text-slate-400 leading-relaxed pt-1">
               {{BOOK_SUMMARY}}
             </p>
-            <div class="pt-3 flex flex-wrap gap-2 justify-center sm:justify-start">
-              <a href="/api/download/text/{{BOOK_TITLE_URL}}" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+            <div class="pt-2 sm:pt-3 flex flex-wrap gap-2 justify-center sm:justify-start">
+              <a href="/api/download/text/{{BOOK_TITLE_URL}}" class="w-full sm:w-auto px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
                 <i class="ph-bold ph-download-simple"></i> Tải toàn bộ sách (.TXT)
               </a>
-              <a href="/api/download/zip/{{BOOK_TITLE_URL}}" class="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+              <a href="/api/download/zip/{{BOOK_TITLE_URL}}" class="w-full sm:w-auto px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
                 <i class="ph-bold ph-file-zip"></i> Tải gói đầy đủ (.ZIP)
               </a>
             </div>
@@ -227,11 +316,42 @@
 
     const textContentArea = document.getElementById('textContentArea');
     const pagesList = document.getElementById('pagesList');
+    const mobilePagesList = document.getElementById('mobilePagesList');
+    const mobileTocDrawer = document.getElementById('mobileTocDrawer');
+    const mobileTocBtn = document.getElementById('mobileTocBtn');
+    const closeMobileTocBtn = document.getElementById('closeMobileTocBtn');
+    const mobileTocBackdrop = document.getElementById('mobileTocBackdrop');
+    const toggleMobileSearchBtn = document.getElementById('toggleMobileSearchBtn');
+    const mobileSearchBar = document.getElementById('mobileSearchBar');
+    const mobileInBookSearch = document.getElementById('mobileInBookSearch');
+    const mobileSearchMatchCount = document.getElementById('mobileSearchMatchCount');
     const tocCount = document.getElementById('tocCount');
     const inBookSearch = document.getElementById('inBookSearch');
     const searchMatchCount = document.getElementById('searchMatchCount');
     const toast = document.getElementById('toast');
     const toastMsg = document.getElementById('toastMsg');
+
+    // Mobile Drawer Handlers
+    function openMobileToc() {
+      mobileTocDrawer.classList.remove('hidden');
+    }
+    function closeMobileToc() {
+      mobileTocDrawer.classList.add('hidden');
+    }
+
+    if (mobileTocBtn) mobileTocBtn.addEventListener('click', openMobileToc);
+    if (closeMobileTocBtn) closeMobileTocBtn.addEventListener('click', closeMobileToc);
+    if (mobileTocBackdrop) mobileTocBackdrop.addEventListener('click', closeMobileToc);
+
+    // Mobile Search Bar Handlers
+    if (toggleMobileSearchBtn) {
+      toggleMobileSearchBtn.addEventListener('click', () => {
+        mobileSearchBar.classList.toggle('hidden');
+        if (!mobileSearchBar.classList.contains('hidden')) {
+          mobileInBookSearch.focus();
+        }
+      });
+    }
 
     function showToast(msg) {
       toastMsg.textContent = msg;
@@ -244,7 +364,7 @@
     function copyShareLink() {
       const url = window.location.href;
       navigator.clipboard.writeText(url).then(() => {
-        showToast('Đã sao chép liên kết đọc sách vào clipboard!');
+        showToast('Đã sao chép liên kết đọc sách!');
       }).catch(() => {
         prompt('Sao chép đường liên kết này:', url);
       });
@@ -329,44 +449,46 @@
       }
 
       tocCount.textContent = `${pages.length} trang`;
-      pagesList.innerHTML = pages.map(p => `
+      
+      const tocItemsHtml = pages.map(p => `
         <a 
           href="#page-${p.num}" 
           class="toc-item flex items-center justify-between p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition"
           data-page="${p.num}"
+          onclick="closeMobileToc()"
         >
           <span class="font-medium">Trang ${p.num}</span>
-          <span class="text-[10px] text-slate-500 font-mono">${p.fileName}</span>
+          <span class="text-[10px] text-slate-500 font-mono">${escapeHtml(p.fileName)}</span>
         </a>
       `).join('');
 
+      pagesList.innerHTML = tocItemsHtml;
+      if (mobilePagesList) mobilePagesList.innerHTML = tocItemsHtml;
+
       // Render book pages in reading area
       textContentArea.innerHTML = pages.map(p => `
-        <section id="page-${p.num}" class="page-block py-6 border-b border-slate-800/40 relative">
+        <section id="page-${p.num}" class="page-block py-5 sm:py-6 border-b border-slate-800/40 relative">
           <!-- Page Header Divider -->
-          <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-800/80 text-xs font-mono text-emerald-400">
-            <span class="px-2.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 font-bold">
+          <div class="page-header-divider flex items-center justify-between gap-2 mb-4 sm:mb-6 pb-2 border-b border-slate-800/80 text-xs font-mono text-emerald-400">
+            <span class="px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 font-bold text-[11px] sm:text-xs">
               Trang ${p.num} / ${p.total}
             </span>
-            <span class="text-slate-500">${escapeHtml(p.fileName)}</span>
+            <span class="text-slate-500 text-[10px] sm:text-xs truncate">${escapeHtml(p.fileName)}</span>
           </div>
 
           <!-- Page Content -->
-          <div class="page-text whitespace-pre-wrap select-text leading-relaxed">
+          <div class="page-text whitespace-pre-wrap select-text leading-relaxed break-words text-slate-200">
             ${escapeHtml(p.content)}
           </div>
         </section>
       `).join('');
     }
 
-    // In-Book Search with Highlights
-    let searchMatches = [];
-    let currentMatchIndex = -1;
-
-    inBookSearch.addEventListener('input', (e) => {
-      const q = e.target.value.trim();
+    // In-Book Search with Highlights (Unified Handler)
+    function handleSearch(q) {
       if (!q) {
         searchMatchCount.textContent = '';
+        if (mobileSearchMatchCount) mobileSearchMatchCount.textContent = '';
         renderFormattedText(rawBookContent);
         return;
       }
@@ -389,8 +511,15 @@
         }
       });
 
-      searchMatchCount.textContent = count > 0 ? `${count} kết quả` : '0';
-    });
+      const resLabel = count > 0 ? `${count} kết quả` : '0';
+      searchMatchCount.textContent = resLabel;
+      if (mobileSearchMatchCount) mobileSearchMatchCount.textContent = resLabel;
+    }
+
+    inBookSearch.addEventListener('input', (e) => handleSearch(e.target.value.trim()));
+    if (mobileInBookSearch) {
+      mobileInBookSearch.addEventListener('input', (e) => handleSearch(e.target.value.trim()));
+    }
 
     function escapeRegex(str) {
       return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
