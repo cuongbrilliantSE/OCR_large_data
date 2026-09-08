@@ -37,5 +37,7 @@ logs/*
 # Cache & local tools
 .freebuff/
 .cache/
+.pytest_cache/
+.codegraph/
 data/page_cache/
 data/covers/
