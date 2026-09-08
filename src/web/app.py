@@ -36,7 +36,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 INDEX_HTML = STATIC_DIR / "index.html"
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def get_index():
     if not INDEX_HTML.is_file():
         raise HTTPException(status_code=404, detail="Index HTML not found")
