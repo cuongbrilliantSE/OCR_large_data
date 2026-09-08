@@ -57,35 +57,43 @@ class Dispatcher:
                 JsonlWriter(self.output_dir / "results.jsonl")
             )
 
-    def run(self, max_limit: Optional[int] = None, book_name: Optional[str] = None) -> None:
+    def run(
+        self,
+        max_limit: Optional[int] = None,
+        book_name: Optional[str] = None,
+        show_progress: bool = True,
+    ) -> None:
         """
         Execute OCR processing on all pending tasks.
         If book_name is provided, only process pages for that specific book folder.
+        Set show_progress=False when called from a non-console context (web thread).
         """
         # 1. Reset any lingering tasks from previous abrupt shutdowns
         hanging = self.tracker.reset_hanging_tasks(book_name=book_name)
-        if hanging > 0:
+        if hanging > 0 and show_progress:
             console.print(f"[yellow]Đã đặt lại {hanging} tác vụ bị gián đoạn về trạng thái PENDING.[/yellow]")
 
         # 2. Get pending count
         stats = self.tracker.get_statistics(book_name=book_name)
         total_pending = stats["pending"]
         if total_pending == 0:
-            msg = f"Không có ảnh nào cần xử lý cho sách '{book_name}'." if book_name else "Không có ảnh nào cần xử lý. Tất cả đều đã hoàn thành!"
-            console.print(f"[green]{msg}[/green]")
+            if show_progress:
+                msg = f"Không có ảnh nào cần xử lý cho sách '{book_name}'." if book_name else "Không có ảnh nào cần xử lý. Tất cả đều đã hoàn thành!"
+                console.print(f"[green]{msg}[/green]")
             return
 
         limit_to_process = min(total_pending, max_limit) if max_limit else total_pending
         num_workers = self.config.system.num_workers
         batch_size = self.config.system.batch_size
 
-        book_info = f" | Cuốn sách: [bold magenta]{book_name}[/bold magenta]" if book_name else ""
-        console.print(
-            f"[bold cyan]Bắt đầu xử lý OCR:[/bold cyan] "
-            f"Tổng số [green]{limit_to_process}[/green] ảnh{book_info} | "
-            f"Số luồng song song: [yellow]{num_workers}[/yellow] | "
-            f"Batch: [yellow]{batch_size}[/yellow]"
-        )
+        if show_progress:
+            book_info = f" | Cuốn sách: [bold magenta]{book_name}[/bold magenta]" if book_name else ""
+            console.print(
+                f"[bold cyan]Bắt đầu xử lý OCR:[/bold cyan] "
+                f"Tổng số [green]{limit_to_process}[/green] ảnh{book_info} | "
+                f"Số luồng song song: [yellow]{num_workers}[/yellow] | "
+                f"Batch: [yellow]{batch_size}[/yellow]"
+            )
 
         cfg_dict = self.config.model_dump()
 
@@ -98,7 +106,8 @@ class Dispatcher:
             MofNCompleteColumn(),
             TextColumn("• Tốc độ: [cyan]{task.fields[speed]:.1f} img/s[/cyan]"),
             TimeRemainingColumn(),
-            console=console
+            console=console,
+            disable=not show_progress,
         ) as progress:
             task_id = progress.add_task(
                 f"Đang nhận diện văn bản{f' [{book_name}]' if book_name else ''}...",
@@ -115,12 +124,11 @@ class Dispatcher:
                     while processed_count < limit_to_process:
                         # Fetch next batch of pending tasks
                         current_limit = min(batch_size, limit_to_process - processed_count)
-                        pending_items = self.tracker.get_pending_tasks(limit=current_limit, book_name=book_name)
+                        pending_items = self.tracker.claim_pending_tasks(limit=current_limit, book_name=book_name)
                         if not pending_items:
                             break
 
                         file_paths = [item["file_path"] for item in pending_items]
-                        self.tracker.mark_in_progress(file_paths)
 
                         # Submit chunk of tasks — config_dict passed per-task for thread-local init
                         futures = [
@@ -157,6 +165,9 @@ class Dispatcher:
                 finally:
                     for w in self.writers:
                         w.close()
+
+        if not show_progress:
+            return
 
         # Summary report
         final_stats = self.tracker.get_statistics(book_name=book_name)

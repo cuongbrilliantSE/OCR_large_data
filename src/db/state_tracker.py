@@ -101,6 +101,48 @@ class StateTracker:
             cursor = conn.execute(query, params)
             return [dict(row) for row in cursor.fetchall()]
 
+    def claim_pending_tasks(
+        self,
+        limit: int,
+        book_name: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Atomically select up to `limit` PENDING tasks and flip them to IN_PROGRESS
+        in a single statement, returning the claimed rows.
+
+        Safe against concurrent dispatchers (job thread + CLI): each row is handed
+        to exactly one caller. Replaces the get_pending_tasks + mark_in_progress
+        two-step, which could hand the same rows to two workers.
+        """
+        if limit <= 0:
+            return []
+
+        select = "SELECT id FROM tasks WHERE status = 'PENDING'"
+        params: List[Any] = []
+        if book_name:
+            select += " AND (file_path LIKE ? OR file_path LIKE ?)"
+            params.extend([f"{book_name}/%", f"{book_name}\\%"])
+        select += " ORDER BY id ASC LIMIT ?"
+        params.append(int(limit))
+
+        query = f"""
+            UPDATE tasks
+            SET status = 'IN_PROGRESS', updated_at = CURRENT_TIMESTAMP
+            WHERE id IN ({select})
+            RETURNING file_path, file_size;
+        """
+
+        with self._get_connection() as conn:
+            conn.isolation_level = None
+            conn.execute("BEGIN IMMEDIATE;")
+            try:
+                rows = conn.execute(query, params).fetchall()
+                conn.execute("COMMIT;")
+            except Exception:
+                conn.execute("ROLLBACK;")
+                raise
+        return [dict(row) for row in rows]
+
     def mark_in_progress(self, file_paths: List[str]) -> None:
         """Mark a batch of tasks as IN_PROGRESS."""
         if not file_paths:
