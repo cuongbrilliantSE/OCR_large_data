@@ -17,13 +17,15 @@ def _get_engine_and_cleaner(config_dict: Dict[str, Any]):
 
                 pre_cfg = config_dict.get("preprocessing", {})
                 ocr_cfg = config_dict.get("ocr", {})
+                from src.config import GeminiConfig
                 from src.engines.gemini_engine import GeminiVisionEngine
                 gemini_cfg = ocr_cfg.get("gemini", {})
+                _defaults = GeminiConfig()
                 _local.engine = GeminiVisionEngine(
                     api_key=gemini_cfg.get("api_key") or None,
-                    model_name=gemini_cfg.get("model_name", "gemini-2.5-flash"),
-                    temperature=gemini_cfg.get("temperature", 0.0),
-                    max_retries=gemini_cfg.get("max_retries", 3),
+                    model_name=gemini_cfg.get("model_name") or _defaults.model_name,
+                    temperature=gemini_cfg.get("temperature", _defaults.temperature),
+                    max_retries=gemini_cfg.get("max_retries", _defaults.max_retries),
                 )
 
                 _local.cleaner = ImageCleaner(

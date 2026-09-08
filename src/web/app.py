@@ -26,7 +26,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    # Credentials cannot be combined with a "*" origin per the CORS spec; this API
+    # is public read-only and uses no cookie/session auth.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -376,8 +378,9 @@ async def upload_archive(
                 "reader_url": f"/books/{dup['slug']}"
             })
 
-    temp_dir = Path(tempfile.gettempdir())
-    temp_archive_path = temp_dir / f"upload_{os.getpid()}_{original_filename}"
+    fd, temp_name = tempfile.mkstemp(suffix=f"_{Path(original_filename).name}")
+    os.close(fd)
+    temp_archive_path = Path(temp_name)
 
     try:
         with open(temp_archive_path, "wb") as buffer:

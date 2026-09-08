@@ -77,11 +77,24 @@ class GeminiVisionEngine(BaseOCREngine):
         except Exception:
             import google.generativeai as genai_legacy
             genai_legacy.configure(api_key=self.api_key)
-            self.client = genai_legacy.GenerativeModel(
-                model_name=self.model_name,
-                system_instruction=SYSTEM_PROMPT
-            )
+            self._genai_legacy = genai_legacy
+            self._legacy_models: Dict[str, Any] = {}
+            self.client = self._get_legacy_model(self.model_name)
             self._sdk_type = "legacy"
+
+    def _get_legacy_model(self, model_name: str):
+        """Return (and cache) a legacy GenerativeModel for the given model name.
+
+        The model id is bound at construction time in the legacy SDK, so the
+        pool-switching logic in _call_gemini must rebuild the model when it
+        changes rather than reuse the one made at init.
+        """
+        if model_name not in self._legacy_models:
+            self._legacy_models[model_name] = self._genai_legacy.GenerativeModel(
+                model_name=model_name,
+                system_instruction=SYSTEM_PROMPT,
+            )
+        return self._legacy_models[model_name]
 
     def _call_gemini(self, pil_img: Image.Image) -> str:
         """Call Gemini Vision API with automatic retry on rate limits."""
@@ -95,7 +108,8 @@ class GeminiVisionEngine(BaseOCREngine):
                     )
                     return (response.text or "").strip()
                 else:
-                    response = self.client.generate_content(
+                    model = self._get_legacy_model(self.model_name)
+                    response = model.generate_content(
                         [pil_img, "Hãy đọc toàn bộ văn bản trong ảnh theo đúng quy tắc đã hướng dẫn."],
                         generation_config={"temperature": self.temperature}
                     )

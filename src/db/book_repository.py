@@ -447,6 +447,9 @@ class BookRepository:
                     return src_image
 
                 # If it's HEIC or TIFF, convert and cache as JPEG
+                cached_file = self.cache_dir / f"{slug}_p{page_num}.jpg"
+                if cached_file.is_file() and cached_file.stat().st_size > 0:
+                    return cached_file
                 try:
                     cached_file.parent.mkdir(parents=True, exist_ok=True)
                     with Image.open(src_image) as im:
