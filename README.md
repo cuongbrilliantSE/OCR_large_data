@@ -3,8 +3,10 @@ title: Book OCR Studio AI
 emoji: 📚
 colorFrom: blue
 colorTo: indigo
-sdk: docker
-app_port: 7860
+sdk: gradio
+sdk_version: 6.26.0
+app_file: app.py
+short_description: OCR sách & tài liệu tiếng Việt với Gemini Vision AI
 pinned: false
 ---
 
