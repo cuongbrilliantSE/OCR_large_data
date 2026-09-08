@@ -30,35 +30,43 @@ class OCRJobManager:
         self.active_jobs: Dict[str, Dict[str, Any]] = {}
         self.stop_events: Dict[str, threading.Event] = {}
         self.job_threads: Dict[str, threading.Thread] = {}
+        # Guards reads/writes of active_jobs & per-job dicts (job threads vs API handlers).
+        self._state_lock = threading.RLock()
         self._initialized = True
 
+    def get_job(self, book_name: str) -> Optional[Dict[str, Any]]:
+        with self._state_lock:
+            return self.active_jobs.get(book_name)
+
     def get_or_create_job(self, book_name: str) -> Dict[str, Any]:
-        if book_name not in self.active_jobs:
-            self.active_jobs[book_name] = {
-                "book_name": book_name,
-                "state": "idle",  # idle, processing, paused, completed, error
-                "total": 0,
-                "done": 0,
-                "pending": 0,
-                "failed": 0,
-                "percent": 0.0,
-                "avg_time_ms": 0.0,
-                "latest_preview": None,
-                "logs": [],
-                "error": None,
-                "output_text_file": None,
-                "output_zip_file": None,
-                "updated_at": time.time()
-            }
-        return self.active_jobs[book_name]
+        with self._state_lock:
+            if book_name not in self.active_jobs:
+                self.active_jobs[book_name] = {
+                    "book_name": book_name,
+                    "state": "idle",  # idle, processing, paused, completed, error
+                    "total": 0,
+                    "done": 0,
+                    "pending": 0,
+                    "failed": 0,
+                    "percent": 0.0,
+                    "avg_time_ms": 0.0,
+                    "latest_preview": None,
+                    "logs": [],
+                    "error": None,
+                    "output_text_file": None,
+                    "output_zip_file": None,
+                    "updated_at": time.time()
+                }
+            return self.active_jobs[book_name]
 
     def add_log(self, book_name: str, message: str):
         job = self.get_or_create_job(book_name)
         timestamp = time.strftime("%H:%M:%S")
-        job["logs"].append(f"[{timestamp}] {message}")
-        if len(job["logs"]) > 100:
-            job["logs"] = job["logs"][-100:]
-        job["updated_at"] = time.time()
+        with self._state_lock:
+            job["logs"].append(f"[{timestamp}] {message}")
+            if len(job["logs"]) > 100:
+                job["logs"] = job["logs"][-100:]
+            job["updated_at"] = time.time()
 
     def scan_and_register(self, book_name: str) -> int:
         scanned_items = list(scan_image_files(self.config.paths.input_dir, book_name=book_name))
@@ -69,15 +77,9 @@ class OCRJobManager:
     def refresh_stats(self, book_name: str) -> Dict[str, Any]:
         job = self.get_or_create_job(book_name)
         stats = self.tracker.get_statistics(book_name=book_name)
-        job["total"] = stats["total"]
-        job["done"] = stats["done"]
-        job["pending"] = stats["pending"]
-        job["failed"] = stats["failed"]
-        job["percent"] = stats["percent_complete"]
-        job["avg_time_ms"] = stats["avg_time_ms"]
-        job["updated_at"] = time.time()
 
-        # Check latest generated text file for preview
+        # Compute file-derived fields outside the lock (filesystem I/O).
+        preview = None
         output_book_dir = Path(self.config.paths.output_dir) / book_name
         if output_book_dir.is_dir():
             txt_files = list(output_book_dir.glob("*.txt"))
@@ -85,25 +87,32 @@ class OCRJobManager:
                 latest_txt = max(txt_files, key=lambda p: p.stat().st_mtime)
                 try:
                     snippet = latest_txt.read_text(encoding="utf-8", errors="replace")[:600]
-                    job["latest_preview"] = {
-                        "filename": latest_txt.name,
-                        "snippet": snippet
-                    }
+                    preview = {"filename": latest_txt.name, "snippet": snippet}
                 except Exception:
                     pass
 
         merged_txt = Path(self.config.paths.output_dir) / f"{book_name}.txt"
-        if merged_txt.is_file():
-            job["output_text_file"] = str(merged_txt)
-
         pkg_zip = Path(self.config.paths.output_dir) / f"{book_name}_package.zip"
-        if pkg_zip.is_file():
-            job["output_zip_file"] = str(pkg_zip)
 
-        if job["total"] > 0 and job["done"] == job["total"]:
-            job["state"] = "completed"
-        elif job["failed"] > 0 and job["pending"] == 0 and job["state"] != "processing":
-            job["state"] = "has_failed"
+        with self._state_lock:
+            job["total"] = stats["total"]
+            job["done"] = stats["done"]
+            job["pending"] = stats["pending"]
+            job["failed"] = stats["failed"]
+            job["percent"] = stats["percent_complete"]
+            job["avg_time_ms"] = stats["avg_time_ms"]
+            job["updated_at"] = time.time()
+            if preview is not None:
+                job["latest_preview"] = preview
+            if merged_txt.is_file():
+                job["output_text_file"] = str(merged_txt)
+            if pkg_zip.is_file():
+                job["output_zip_file"] = str(pkg_zip)
+
+            if job["total"] > 0 and job["done"] == job["total"]:
+                job["state"] = "completed"
+            elif job["failed"] > 0 and job["pending"] == 0 and job["state"] != "processing":
+                job["state"] = "has_failed"
 
         return job
 
@@ -150,23 +159,23 @@ class OCRJobManager:
         stop_event = self.stop_events.get(book_name)
 
         try:
-            # Dispatch batches while tracking progress
+            # Dispatch batches while tracking progress. The dispatcher does the
+            # actual atomic claiming of pending rows; this loop only paces batches
+            # and refreshes UI stats between them.
             while not (stop_event and stop_event.is_set()):
                 self.refresh_stats(book_name)
-                job = self.active_jobs[book_name]
+                job = self.get_or_create_job(book_name)
 
-                # Check if done
-                if job["pending"] == 0 and job["failed"] == 0 and job["total"] > 0:
+                # Nothing left to process (failed pages are handled via retry flow).
+                if job["pending"] == 0 and job["total"] > 0:
                     break
 
-                # Fetch next pending tasks batch
-                pending_tasks = self.tracker.get_pending_tasks(limit=cfg.system.batch_size, book_name=book_name)
-                if not pending_tasks:
-                    break
-
-                # Run dispatcher for these tasks
                 dispatcher = Dispatcher(cfg)
-                dispatcher.run(max_limit=cfg.system.batch_size, book_name=book_name)
+                dispatcher.run(
+                    max_limit=cfg.system.batch_size,
+                    book_name=book_name,
+                    show_progress=False,
+                )
                 self.refresh_stats(book_name)
 
                 # Small cooldown
@@ -174,28 +183,34 @@ class OCRJobManager:
 
             # Finished or stopped
             self.refresh_stats(book_name)
-            job = self.active_jobs[book_name]
+            job = self.get_or_create_job(book_name)
 
-            if stop_event and stop_event.is_set():
-                job["state"] = "paused"
-                self.add_log(book_name, "Tiến trình đã tạm dừng an toàn. Các trang đã xong được giữ nguyên.")
-            elif job["total"] > 0 and job["done"] == job["total"]:
-                job["state"] = "completed"
-                self.add_log(book_name, "Toàn bộ các trang sách đã được OCR hoàn tất 100%!")
-                # Automatically package book
+            with self._state_lock:
+                if stop_event and stop_event.is_set():
+                    job["state"] = "paused"
+                    final_msg = "Tiến trình đã tạm dừng an toàn. Các trang đã xong được giữ nguyên."
+                elif job["total"] > 0 and job["done"] == job["total"]:
+                    job["state"] = "completed"
+                    final_msg = "Toàn bộ các trang sách đã được OCR hoàn tất 100%!"
+                elif job["failed"] > 0 and job["pending"] == 0:
+                    job["state"] = "has_failed"
+                    final_msg = f"Đã dừng. Có {job['failed']} trang bị lỗi cần thử lại."
+                else:
+                    job["state"] = "idle"
+                    final_msg = None
+
+            if final_msg:
+                self.add_log(book_name, final_msg)
+            if job["state"] == "completed":
                 self.merge_and_package_book(book_name)
-            elif job["failed"] > 0 and job["pending"] == 0:
-                job["state"] = "has_failed"
-                self.add_log(book_name, f"Đã dừng. Có {job['failed']} trang bị lỗi cần thử lại.")
-            else:
-                job["state"] = "idle"
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             job = self.get_or_create_job(book_name)
-            job["state"] = "error"
-            job["error"] = str(e)
+            with self._state_lock:
+                job["state"] = "error"
+                job["error"] = str(e)
             self.add_log(book_name, f"Lỗi trong quá trình xử lý: {str(e)}")
 
 
@@ -234,8 +249,9 @@ class OCRJobManager:
                 zf.write(f, arcname=f"pages/{f.name}")
 
         job = self.get_or_create_job(book_name)
-        job["output_text_file"] = str(merged_txt_path)
-        job["output_zip_file"] = str(zip_path)
+        with self._state_lock:
+            job["output_text_file"] = str(merged_txt_path)
+            job["output_zip_file"] = str(zip_path)
         self.add_log(book_name, f"Đã đóng gói hoàn chỉnh file sách ({len(txt_files)} trang)!")
 
         # 3. Upsert to BookRepository and sync to Hugging Face Dataset
