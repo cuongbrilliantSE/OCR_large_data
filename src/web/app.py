@@ -17,7 +17,7 @@ from src.web.job_manager import OCRJobManager
 
 app = FastAPI(
     title="Book OCR Studio API",
-    description="High-throughput Large-Scale Image to Text OCR Pipeline with Gemini Vision AI",
+    description="High-throughput Large-Scale Image to Text OCR Pipeline",
     version="2.0.0"
 )
 

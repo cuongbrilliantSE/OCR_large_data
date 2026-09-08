@@ -6,7 +6,7 @@ colorTo: indigo
 sdk: gradio
 sdk_version: 6.26.0
 app_file: app.py
-short_description: OCR sách & tài liệu tiếng Việt với Gemini Vision AI
+short_description: OCR sách & tài liệu tiếng Việt chất lượng cao
 pinned: false
 ---
 
