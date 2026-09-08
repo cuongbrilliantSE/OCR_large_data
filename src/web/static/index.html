@@ -259,9 +259,6 @@
           <button id="retryJobBtn" class="hidden px-3 py-1.5 rounded-xl border border-red-500/30 hover:bg-red-500/10 text-red-400 text-xs font-medium flex items-center gap-1.5 transition">
             <i class="ph-bold ph-arrow-counter-clockwise"></i> Thử lại trang lỗi
           </button>
-          <button id="manualMergeBtn" class="px-3 py-1.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="ph-bold ph-arrows-merge"></i> Ghép file ngay
-          </button>
           <a id="downloadTextBtn" href="#" class="hidden px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 transition">
             <i class="ph-bold ph-download-simple"></i> Tải sách (.TXT)
           </a>
@@ -435,7 +432,6 @@ Chưa có dữ liệu trích xuất...
     const pauseJobBtn = document.getElementById('pauseJobBtn');
     const resumeJobBtn = document.getElementById('resumeJobBtn');
     const retryJobBtn = document.getElementById('retryJobBtn');
-    const manualMergeBtn = document.getElementById('manualMergeBtn');
     const downloadTextBtn = document.getElementById('downloadTextBtn');
     const downloadZipBtn = document.getElementById('downloadZipBtn');
     const booksTableBody = document.getElementById('booksTableBody');
@@ -822,16 +818,6 @@ Chưa có dữ liệu trích xuất...
       }
     });
 
-    manualMergeBtn.addEventListener('click', async () => {
-      if (!activeBookName) return;
-      const res = await fetch(`/api/merge/${encodeURIComponent(activeBookName)}`, { method: 'POST' });
-      if (res.ok) {
-        alert('Ghép sách hoàn tất! Bạn có thể tải file text ngay bây giờ.');
-        pollJobStatus();
-        loadBooksList();
-      }
-    });
-
     // ── Books Library List ──────────────────────────────────────────────────
     async function loadBooksList() {
       try {
@@ -876,9 +862,6 @@ Chưa có dữ liệu trích xuất...
               </td>
               <td class="py-3 px-4">${badge}</td>
               <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
-                <button onclick="viewBook('${escapeHtml(b.book_name)}')" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
-                  <i class="ph-bold ph-eye"></i> Xem
-                </button>
                 ${(b.pending > 0 && b.status !== 'processing') ? `
                   <button onclick="resumeBookDirect('${escapeHtml(b.book_name)}')" class="text-xs px-2.5 py-1 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition">
                     <i class="ph-bold ph-play"></i> Tiếp tục
